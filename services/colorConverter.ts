@@ -1,6 +1,12 @@
 
 interface RGB { r: number; g: number; b: number; }
+interface HSL { h: number; s: number; l: number; }
 interface Oklch { L: number; C: number; h: number; }
+export type ColorFormat = 'oklch' | 'hex' | 'rgb' | 'hsl';
+export interface ConvertOptions {
+    format: ColorFormat;
+    useCssSyntax: boolean;
+}
 
 // --- PARSING FUNCTIONS ---
 
@@ -39,9 +45,7 @@ function hslStringToRgb(hslStr: string): RGB | null {
   let c = (1 - Math.abs(2 * l - 1)) * s,
       x = c * (1 - Math.abs((h / 60) % 2 - 1)),
       m = l - c/2,
-      r = 0,
-      g = 0,
-      b = 0;
+      r = 0, g = 0, b = 0;
 
   if (0 <= h && h < 60) { [r, g, b] = [c, x, 0]; }
   else if (60 <= h && h < 120) { [r, g, b] = [x, c, 0]; }
@@ -58,7 +62,30 @@ function hslStringToRgb(hslStr: string): RGB | null {
 }
 
 
-// --- COLOR SPACE CONVERSION PIPELINE ---
+// --- CONVERSION PIPELINE (RGB -> TARGET) ---
+
+function rgbToHex({ r, g, b }: RGB): string {
+  const toHex = (c: number) => Math.round(c).toString(16).padStart(2, '0');
+  return `${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function rgbToHsl({ r, g, b }: RGB): HSL {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0, s = 0, l = (max + min) / 2;
+
+    if (max !== min) {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+    }
+    return { h: h * 360, s: s * 100, l: l * 100 };
+}
 
 function srgbToLinearRgb(c: number): number {
   const v = c / 255;
@@ -76,11 +103,9 @@ function xyzToOklab(x: number, y: number, z: number): { L: number; a: number; b:
   const l = 0.4122214708 * x + 0.5363325363 * y + 0.0514459929 * z;
   const m = 0.2119034982 * x + 0.6806995451 * y + 0.1073969566 * z;
   const s = 0.0883024619 * x + 0.2817188376 * y + 0.6299787005 * z;
-
   const l_ = Math.cbrt(l);
   const m_ = Math.cbrt(m);
   const s_ = Math.cbrt(s);
-
   return {
     L: 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_,
     a: 1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_,
@@ -91,26 +116,31 @@ function xyzToOklab(x: number, y: number, z: number): { L: number; a: number; b:
 function oklabToOklch(L: number, a: number, b: number): Oklch {
   const C = Math.sqrt(a * a + b * b);
   let h = Math.atan2(b, a) * (180 / Math.PI);
-  if (h < 0) {
-    h += 360;
-  }
+  if (h < 0) { h += 360; }
   return { L, C, h };
 }
 
-function formatOklch(oklch: Oklch): string {
-    const l = (oklch.L * 100).toFixed(2);
-    const c = oklch.C.toFixed(4);
-    const h = oklch.h.toFixed(2);
-    // Remove trailing zeros for cleaner output
-    const cleanL = l.replace(/\.00$/, '');
-    const cleanC = c.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
-    const cleanH = h.replace(/\.00$/, '');
-    return `oklch(${cleanL}% ${cleanC} ${cleanH})`;
+function rgbToOklch(rgb: RGB): Oklch {
+    const linearR = srgbToLinearRgb(rgb.r);
+    const linearG = srgbToLinearRgb(rgb.g);
+    const linearB = srgbToLinearRgb(rgb.b);
+    const xyz = linearRgbToXyz(linearR, linearG, linearB);
+    const oklab = xyzToOklab(xyz.x, xyz.y, xyz.z);
+    return oklabToOklch(oklab.L, oklab.a, oklab.b);
+}
+
+// --- FORMATTING FUNCTIONS ---
+
+function formatOklch(oklch: Oklch, useCssSyntax: boolean): string {
+    const l = (oklch.L * 100).toFixed(2).replace(/\.00$/, '');
+    const c = oklch.C.toFixed(4).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+    const h = oklch.h.toFixed(2).replace(/\.00$/, '');
+    return useCssSyntax ? `oklch(${l}% ${c} ${h})` : `${l} ${c} ${h}`;
 }
 
 // --- MAIN EXPORTED FUNCTION ---
 
-export function convertCssToOklch(cssString: string): string {
+export function convertCssColors(cssString: string, options: ConvertOptions): string {
   if (!cssString) return '';
   const colorRegex = /(hsl(a?)\s*\([\d\s.,%]+\))|(rgb(a?)\s*\([\d\s.,]+\))|(#[a-fA-F0-9]{3,8})/g;
   
@@ -119,28 +149,41 @@ export function convertCssToOklch(cssString: string): string {
     const cleanedMatch = match.toLowerCase().trim();
 
     try {
-        if (cleanedMatch.startsWith('#')) {
-            rgb = hexToRgb(cleanedMatch);
-        } else if (cleanedMatch.startsWith('rgb')) {
-            rgb = rgbStringToRgb(cleanedMatch);
-        } else if (cleanedMatch.startsWith('hsl')) {
-            rgb = hslStringToRgb(cleanedMatch);
-        }
+        if (cleanedMatch.startsWith('#')) { rgb = hexToRgb(cleanedMatch); } 
+        else if (cleanedMatch.startsWith('rgb')) { rgb = rgbStringToRgb(cleanedMatch); } 
+        else if (cleanedMatch.startsWith('hsl')) { rgb = hslStringToRgb(cleanedMatch); }
 
         if (!rgb) return match;
+        
+        rgb = { 
+          r: Math.max(0, Math.min(255, rgb.r)), 
+          g: Math.max(0, Math.min(255, rgb.g)), 
+          b: Math.max(0, Math.min(255, rgb.b)) 
+        };
 
-        const linearR = srgbToLinearRgb(rgb.r);
-        const linearG = srgbToLinearRgb(rgb.g);
-        const linearB = srgbToLinearRgb(rgb.b);
+        switch(options.format) {
+            case 'oklch':
+                return formatOklch(rgbToOklch(rgb), options.useCssSyntax);
+            case 'hex':
+                return (options.useCssSyntax ? '#' : '') + rgbToHex(rgb);
+            case 'rgb':
+                 const r = Math.round(rgb.r);
+                 const g = Math.round(rgb.g);
+                 const b = Math.round(rgb.b);
+                 return options.useCssSyntax ? `rgb(${r}, ${g}, ${b})` : `${r} ${g} ${b}`;
+            case 'hsl':
+                const hsl = rgbToHsl(rgb);
+                const h = hsl.h.toFixed(0);
+                const s = hsl.s.toFixed(1);
+                const l = hsl.l.toFixed(1);
+                return options.useCssSyntax ? `hsl(${h}, ${s}%, ${l}%)` : `${h} ${s} ${l}`;
+            default:
+                return match;
+        }
 
-        const xyz = linearRgbToXyz(linearR, linearG, linearB);
-        const oklab = xyzToOklab(xyz.x, xyz.y, xyz.z);
-        const oklch = oklabToOklch(oklab.L, oklab.a, oklab.b);
-
-        return formatOklch(oklch);
     } catch (e) {
         console.error("Failed to convert color:", match, e);
-        return match; // If any error occurs, return the original color string
+        return match;
     }
   });
 }
