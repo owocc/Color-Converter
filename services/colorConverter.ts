@@ -1,4 +1,3 @@
-
 interface RGB { r: number; g: number; b: number; }
 interface HSL { h: number; s: number; l: number; }
 interface Oklch { L: number; C: number; h: number; }
@@ -61,6 +60,58 @@ function hslStringToRgb(hslStr: string): RGB | null {
   return { r, g, b };
 }
 
+// --- REVERSE CONVERSION (OKLCH -> RGB) ---
+
+function oklchToOklab({ L, C, h }: Oklch): { L: number; a: number; b: number } {
+  const rad = h * (Math.PI / 180);
+  return { L, a: C * Math.cos(rad), b: C * Math.sin(rad) };
+}
+
+function linearRgbToSrgb(c: number): number {
+    const v = Math.max(0, Math.min(1, c));
+    const srgb = v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1/2.4) - 0.055;
+    return srgb * 255;
+}
+
+function oklchStringToRgb(oklchStr: string): RGB | null {
+    const match = oklchStr.match(/oklch\(\s*([\d.]+)%?\s+([\d.]+)\s+([\d.]+)/);
+    if (!match) return null;
+    
+    const oklch: Oklch = {
+        L: parseFloat(match[1]) / 100.0,
+        C: parseFloat(match[2]),
+        h: parseFloat(match[3]),
+    };
+    
+    const oklab = oklchToOklab(oklch);
+    
+    // Oklab to non-linear LMS
+    const l_ = oklab.L + 0.29793448 * oklab.a + 0.14660341 * oklab.b;
+    const m_ = oklab.L - 0.0796724  * oklab.a - 0.04561021 * oklab.b;
+    const s_ = oklab.L - 0.06694314 * oklab.a - 0.21205842 * oklab.b;
+
+    // non-linear LMS to linear LMS
+    const l = l_ * l_ * l_;
+    const m = m_ * m_ * m_;
+    const s = s_ * s_ * s_;
+    
+    // linear LMS to XYZ
+    const x =  2.4336798 * l - 1.4583344 * m + 0.02465463 * s;
+    const y = -0.7836384 * l + 1.8210922 * m - 0.03745377 * s;
+    const z = -0.1342398 * l + 0.15587784 * m + 0.97836202 * s;
+    
+    // XYZ to linear sRGB
+    const lr =  3.2404542 * x - 1.5371385 * y - 0.4985314 * z;
+    const lg = -0.9692660 * x + 1.8760108 * y + 0.0415560 * z;
+    const lb =  0.0556434 * x - 0.2040259 * y + 1.0572252 * z;
+    
+    // Linear sRGB to sRGB
+    const r = linearRgbToSrgb(lr);
+    const g = linearRgbToSrgb(lg);
+    const b = linearRgbToSrgb(lb);
+    
+    return { r, g, b };
+}
 
 // --- CONVERSION PIPELINE (RGB -> TARGET) ---
 
@@ -142,7 +193,7 @@ function formatOklch(oklch: Oklch, useCssSyntax: boolean): string {
 
 export function convertCssColors(cssString: string, options: ConvertOptions): string {
   if (!cssString) return '';
-  const colorRegex = /(hsl(a?)\s*\([\d\s.,%]+\))|(rgb(a?)\s*\([\d\s.,]+\))|(#[a-fA-F0-9]{3,8})/g;
+  const colorRegex = /(hsl(a?)\s*\([\d\s.,%]+\))|(rgb(a?)\s*\([\d\s.,]+\))|(#[a-fA-F0-9]{3,8})|(oklch\s*\([\d\s.%/]+\))/g;
   
   return cssString.replace(colorRegex, (match) => {
     let rgb: RGB | null = null;
@@ -152,6 +203,7 @@ export function convertCssColors(cssString: string, options: ConvertOptions): st
         if (cleanedMatch.startsWith('#')) { rgb = hexToRgb(cleanedMatch); } 
         else if (cleanedMatch.startsWith('rgb')) { rgb = rgbStringToRgb(cleanedMatch); } 
         else if (cleanedMatch.startsWith('hsl')) { rgb = hslStringToRgb(cleanedMatch); }
+        else if (cleanedMatch.startsWith('oklch')) { rgb = oklchStringToRgb(cleanedMatch); }
 
         if (!rgb) return match;
         
