@@ -1,0 +1,5 @@
+{
+  "name": "OKLCH Color Converter",
+  "description": "A real-time batch color converter that transforms CSS color values (HEX, RGB, HSL) into the modern OKLCH color space, preserving the original structure of the code.",
+  "requestFramePermissions": []
+}
