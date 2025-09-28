@@ -112,7 +112,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   const isSimpleInput = !readOnly && !highlightingEnabled;
 
   return (
-    <div className="relative flex-grow flex h-full overflow-hidden">
+    <div className="relative flex-grow flex h-full">
       {showLineNumbers && (
         <div
             ref={lineNumbersRef}
@@ -140,7 +140,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
             autoCorrect="off"
         />
       ) : (
-        <div className="relative flex-grow h-full">
+        <div className="relative flex-grow h-full min-h-0">
             {!readOnly && (
                 <textarea
                     id={id}

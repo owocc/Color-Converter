@@ -381,7 +381,7 @@ const ColorConverter: React.FC = () => {
 
         {/* IO Block */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
-            <div className="flex flex-col">
+            <div className="flex flex-col min-h-0 min-w-0">
                 <h2 className="text-sm font-medium mb-3 text-[#C8C5CA] px-2">Input</h2>
                 <div className="bg-[#242429] border border-[#49454F] rounded-3xl p-1 flex flex-col min-h-[400px] sm:min-h-[500px] flex-grow">
                     <CodeEditor
@@ -398,7 +398,7 @@ const ColorConverter: React.FC = () => {
                 </div>
             </div>
 
-            <div className="flex flex-col">
+            <div className="flex flex-col min-h-0 min-w-0">
                  <h2 className="text-sm font-medium mb-3 text-[#C8C5CA] px-2">Output</h2>
                  <div className="bg-[#242429] border border-[#49454F] rounded-3xl p-1 flex flex-col min-h-[400px] sm:min-h-[500px] flex-grow">
                     <CodeEditor
