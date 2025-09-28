@@ -5,10 +5,11 @@ interface CodeEditorProps {
   value: string;
   onValueChange?: (value: string) => void;
   readOnly?: boolean;
-  onColorHover: (color: string, event: React.MouseEvent) => void;
+  onColorHover: (color: string, index: number, event: React.MouseEvent) => void;
   onColorLeave: () => void;
   id: string;
   ariaLabel: string;
+  previewsEnabled: boolean;
 }
 
 const CodeEditor: React.FC<CodeEditorProps> = ({
@@ -19,128 +20,126 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   onColorLeave,
   id,
   ariaLabel,
+  previewsEnabled,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const highlightRef = useRef<HTMLPreElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
-  const hoveredWordRef = useRef<string | null>(null);
-  const throttleTimer = useRef<number | null>(null);
 
-  const handleScroll = () => {
-    if (lineNumbersRef.current && textareaRef.current) {
-      lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
+  const handleScroll = (e: React.UIEvent<HTMLTextAreaElement | HTMLPreElement>) => {
+    const { scrollTop, scrollLeft } = e.currentTarget;
+    if (lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = scrollTop;
+    }
+    if (!readOnly && highlightRef.current) { // Sync highlight layer from textarea scroll
+        highlightRef.current.scrollTop = scrollTop;
+        highlightRef.current.scrollLeft = scrollLeft;
     }
   };
+  
+  const highlightContent = useMemo(() => {
+    if (!value) return null;
+
+    const parts: (string | React.ReactNode)[] = [];
+    let lastIndex = 0;
+    let colorIndex = 0;
+    const matches = value.matchAll(COLOR_REGEX);
+
+    for (const match of matches) {
+        const color = match[0];
+        const index = match.index!;
+        const currentIndex = colorIndex;
+
+        if (index > lastIndex) {
+            parts.push(value.substring(lastIndex, index));
+        }
+
+        parts.push(
+            <span
+                key={`${index}-${color}`}
+                className="color-token"
+                onMouseEnter={previewsEnabled ? (e) => onColorHover(color, currentIndex, e) : undefined}
+                onMouseLeave={previewsEnabled ? onColorLeave : undefined}
+                style={{
+                    backgroundColor: 'rgba(208, 188, 255, 0.08)',
+                    borderRadius: '3px',
+                    cursor: previewsEnabled ? 'pointer' : 'default',
+                    padding: '1px 2px',
+                    margin: '-1px -2px',
+                }}
+            >
+                {color}
+            </span>
+        );
+        lastIndex = index + color.length;
+        colorIndex++;
+    }
+
+    if (lastIndex < value.length) {
+        parts.push(value.substring(lastIndex));
+    }
+
+    return parts;
+  }, [value, onColorHover, onColorLeave, previewsEnabled]);
 
   const lineCount = useMemo(() => {
     const count = value.split('\n').length;
-    return Math.max(1, count); // Ensure at least one line number
+    return Math.max(1, count);
   }, [value]);
 
   const lineNumbers = useMemo(() => {
     return Array.from({ length: lineCount }, (_, i) => i + 1).join('\n');
   }, [lineCount]);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLTextAreaElement>) => {
-    if (throttleTimer.current) return;
-
-    throttleTimer.current = window.setTimeout(() => {
-        const textarea = textareaRef.current;
-        if (!textarea) return;
-
-        // Approximate character position from mouse coordinates
-        const rect = textarea.getBoundingClientRect();
-        // Consistent with Tailwind's text-sm (14px) and leading-6 (24px)
-        const lineHeight = 24; 
-        const charWidth = 8.4; // Approximation for 14px mono font
-
-        const scrollTop = textarea.scrollTop;
-        const y = e.clientY - rect.top + scrollTop;
-        const lineIndex = Math.floor(y / lineHeight);
-
-        const lines = value.split('\n');
-        if (lineIndex < 0 || lineIndex >= lines.length) {
-            if (hoveredWordRef.current) {
-                hoveredWordRef.current = null;
-                onColorLeave();
-            }
-            throttleTimer.current = null;
-            return;
-        }
-        
-        const line = lines[lineIndex];
-        const scrollLeft = textarea.scrollLeft;
-        const x = e.clientX - rect.left + scrollLeft - 2; // Minor adjustment for padding/cursor
-        const colIndex = Math.max(0, Math.round(x / charWidth));
-
-        // Find word boundaries around the calculated column index
-        const match = line.substring(0, colIndex + 1).match(/[\w#.()-]+$/);
-        if (!match) {
-            if (hoveredWordRef.current) {
-                hoveredWordRef.current = null;
-                onColorLeave();
-            }
-            throttleTimer.current = null;
-            return;
-        }
-
-        const prefix = match[0];
-        const suffixMatch = line.substring(match.index! + prefix.length).match(/^[\w#.()%/-]+/);
-        const word = prefix + (suffixMatch ? suffixMatch[0] : '');
-        
-        COLOR_REGEX.lastIndex = 0; // Reset regex state before test
-        if (word && COLOR_REGEX.test(word)) {
-            if (hoveredWordRef.current !== word) {
-                hoveredWordRef.current = word;
-                onColorHover(word, e);
-            }
-        } else {
-            if (hoveredWordRef.current) {
-                hoveredWordRef.current = null;
-                onColorLeave();
-            }
-        }
-        throttleTimer.current = null;
-    }, 50);
-  }, [value, onColorHover, onColorLeave]);
-
-  const handleMouseLeave = useCallback(() => {
-      if (hoveredWordRef.current) {
-        hoveredWordRef.current = null;
-        onColorLeave();
-      }
-      if (throttleTimer.current) {
-          clearTimeout(throttleTimer.current);
-          throttleTimer.current = null;
-      }
-  }, [onColorLeave]);
+  const sharedStyles: React.CSSProperties = {
+    lineHeight: '1.5rem',
+    fontFamily: 'monospace',
+    fontSize: '0.875rem',
+    padding: '1rem',
+    whiteSpace: 'pre',
+    wordBreak: 'keep-all',
+    overflowWrap: 'normal'
+  };
 
   return (
     <div className="relative flex-grow flex h-full overflow-hidden">
       <div
         ref={lineNumbersRef}
-        className="line-numbers text-right pl-4 pr-3 pt-4 text-[#938F99] font-mono text-sm select-none overflow-y-hidden bg-[#1B1B1F]"
+        className="line-numbers text-right pl-4 pr-3 pt-4 text-[#938F99] font-mono text-sm select-none overflow-y-hidden bg-[#242429]"
         aria-hidden="true"
         style={{ lineHeight: '1.5rem' }}
       >
         <pre className="m-0">{lineNumbers}</pre>
       </div>
-      <textarea
-        id={id}
-        ref={textareaRef}
-        value={value}
-        onChange={(e) => onValueChange && onValueChange(e.target.value)}
-        onScroll={handleScroll}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        readOnly={readOnly}
-        className="flex-grow bg-[#1B1B1F] p-4 font-mono text-sm text-[#C8C5CA] focus:ring-2 focus:ring-[#D0BCFF] focus:outline-none resize-none h-full rounded-r-2xl"
-        style={{ lineHeight: '1.5rem' }}
-        aria-label={ariaLabel}
-        spellCheck="false"
-        autoCapitalize="off"
-        autoComplete="off"
-        autoCorrect="off"
-      />
+      <div className="relative flex-grow h-full">
+        {!readOnly && (
+            <textarea
+                id={id}
+                ref={textareaRef}
+                value={value}
+                onChange={(e) => onValueChange && onValueChange(e.target.value)}
+                onScroll={handleScroll}
+                className="absolute inset-0 w-full h-full resize-none z-10 bg-transparent text-transparent caret-[#E6E1E5] focus:outline-none"
+                style={sharedStyles}
+                aria-label={ariaLabel}
+                spellCheck="false"
+                autoCapitalize="off"
+                autoComplete="off"
+                autoCorrect="off"
+            />
+        )}
+        <pre
+          ref={highlightRef}
+          className={`w-full h-full m-0 z-0 text-[#C8C5CA] ${readOnly ? 'overflow-auto' : 'overflow-hidden pointer-events-none'}`}
+          style={sharedStyles}
+          onScroll={readOnly ? handleScroll : undefined}
+          aria-hidden="true"
+        >
+          <code className={readOnly ? 'pointer-events-auto' : ''}>
+            {highlightContent}
+          </code>
+        </pre>
+      </div>
     </div>
   );
 };

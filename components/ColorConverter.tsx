@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { convertCssColors, ColorFormat } from '../services/colorConverter';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { convertCssColors, ColorFormat, COLOR_REGEX } from '../services/colorConverter';
 import CodeEditor from './CodeEditor';
 
 const PLACEHOLDER_TEXT = `/* 
@@ -29,7 +29,8 @@ const ToggleSwitch: React.FC<{
   onChange: (checked: boolean) => void;
   label: string;
 }> = ({ id, checked, onChange, label }) => (
-  <label htmlFor={id} className="flex items-center cursor-pointer">
+  <label htmlFor={id} className="flex items-center justify-between w-full cursor-pointer">
+    <span className="text-sm font-medium text-[#C8C5CA]">{label}</span>
     <div className="relative">
       <input
         id={id}
@@ -45,37 +46,87 @@ const ToggleSwitch: React.FC<{
         }`}
       ></div>
     </div>
-    <div className="ml-3 text-sm font-medium text-[#C8C5CA]">{label}</div>
   </label>
 );
 
-const ColorTooltip: React.FC<{
-    data: { color: string; top: number; left: number };
-    bg: string;
-}> = ({ data, bg }) => (
-    <div
-        className="fixed z-10 p-2 rounded-lg shadow-lg text-xs"
-        style={{
-            top: `${data.top}px`,
-            left: `${data.left}px`,
-            backgroundColor: bg,
-            border: '1px solid #49454F'
-        }}
-    >
-        <div className="flex items-center gap-2">
-            <div
-                className="w-5 h-5 rounded border border-[#938F99]/50"
-                style={{ backgroundColor: data.color }}
-            ></div>
-            <span className="font-mono text-[#E6E1E5]">{data.color}</span>
-        </div>
-    </div>
-);
+interface TooltipData {
+    original?: { color: string };
+    converted: { color: string };
+    top: number;
+    left: number;
+}
 
-const SettingsPanel: React.FC<{
+const ColorTooltip: React.FC<{
+    data: TooltipData;
+    bg: string;
+    compareEnabled: boolean;
+}> = ({ data, bg, compareEnabled }) => {
+    const showComparison = compareEnabled && data.original && data.original.color !== data.converted.color;
+
+    return (
+        <div
+            className="fixed z-10 p-3 rounded-xl shadow-xl text-xs flex flex-col gap-2"
+            style={{
+                top: `${data.top}px`,
+                left: `${data.left}px`,
+                backgroundColor: bg,
+                border: '1px solid #49454F'
+            }}
+        >
+            {showComparison && data.original && (
+                <>
+                    <div className="flex flex-col items-start gap-1.5">
+                        <span className="text-xs text-[#C8C5CA] opacity-80 px-1">Original</span>
+                        <div className="flex items-center gap-2">
+                            <div
+                                className="w-5 h-5 rounded border border-[#938F99]/50"
+                                style={{ backgroundColor: data.original.color }}
+                            ></div>
+                            <span className="font-mono text-sm text-[#E6E1E5]">{data.original.color}</span>
+                        </div>
+                    </div>
+                    <hr className="border-t border-[#938F99]/30 my-1"/>
+                </>
+            )}
+            <div className="flex flex-col items-start gap-1.5">
+                {showComparison && <span className="text-xs text-[#C8C5CA] opacity-80 px-1">Converted</span>}
+                <div className="flex items-center gap-2">
+                    <div
+                        className="w-5 h-5 rounded border border-[#938F99]/50"
+                        style={{ backgroundColor: data.converted.color }}
+                    ></div>
+                    <span className="font-mono text-sm text-[#E6E1E5]">{data.converted.color}</span>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+interface SettingsPanelProps {
   onBgChange: (color: string) => void;
   currentBg: string;
-}> = ({ onBgChange, currentBg }) => {
+  outputFormat: ColorFormat;
+  onFormatChange: (format: ColorFormat) => void;
+  useCssSyntax: boolean;
+  onCssSyntaxChange: (checked: boolean) => void;
+  showColorPreviews: boolean;
+  onShowColorPreviewsChange: (checked: boolean) => void;
+  compareOnPreview: boolean;
+  onCompareOnPreviewChange: (checked: boolean) => void;
+}
+
+const SettingsPanel: React.FC<SettingsPanelProps> = ({ 
+    onBgChange, 
+    currentBg,
+    outputFormat,
+    onFormatChange,
+    useCssSyntax,
+    onCssSyntaxChange,
+    showColorPreviews,
+    onShowColorPreviewsChange,
+    compareOnPreview,
+    onCompareOnPreviewChange
+}) => {
   const bgOptions = [
     { name: 'Dark', color: '#242429' },
     { name: 'Grey', color: '#49454F' },
@@ -83,8 +134,54 @@ const SettingsPanel: React.FC<{
     { name: 'White', color: '#FFFFFF' },
   ];
   return (
-    <div className="absolute top-full right-0 mt-2 w-48 bg-[#242429] border border-[#49454F] rounded-2xl shadow-xl z-20 p-2">
-        <p className="text-xs text-[#C8C5CA] px-2 pt-1 pb-2">Preview Background</p>
+    <div className="absolute top-full right-0 mt-2 w-60 bg-[#242429] border border-[#49454F] rounded-2xl shadow-xl z-20 p-2 flex flex-col gap-1">
+      <div className="p-2">
+          <label htmlFor="output-format-settings" className="text-xs text-[#C8C5CA] mb-2 block px-1">Output Format</label>
+          <div className="relative">
+              <select
+                  id="output-format-settings"
+                  value={outputFormat}
+                  onChange={(e) => onFormatChange(e.target.value as ColorFormat)}
+                  className="w-full appearance-none bg-[#36343B] border border-[#938F99] rounded-full pl-4 pr-10 py-2.5 text-sm text-[#E6E1E5] focus:ring-2 focus:ring-[#D0BCFF] focus:outline-none focus:border-[#D0BCFF]"
+                  aria-label="Select output color format"
+              >
+                  <option value="oklch">OKLCH</option>
+                  <option value="hex">HEX</option>
+                  <option value="rgb">RGB</option>
+                  <option value="hsl">HSL</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#C8C5CA]">
+                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M5.516 7.548c.436-.446 1.144-.446 1.58 0L10 10.405l2.904-2.857c.436-.446 1.144-.446 1.58 0 .436.446.436 1.17 0 1.616l-3.7 3.64c-.436.446-1.144.446-1.58 0l-3.7-3.64c-.436-.446-.436-1.17 0-1.616z"/></svg>
+              </div>
+          </div>
+      </div>
+       <div className="px-3 py-2">
+          <ToggleSwitch
+              id="css-syntax-toggle-settings"
+              checked={useCssSyntax}
+              onChange={onCssSyntaxChange}
+              label="CSS Syntax"
+          />
+        </div>
+        <div className="px-3 py-2">
+            <ToggleSwitch
+                id="color-preview-toggle-settings"
+                checked={showColorPreviews}
+                onChange={onShowColorPreviewsChange}
+                label="Show Color Previews"
+            />
+        </div>
+         <div className="px-3 py-2">
+            <ToggleSwitch
+                id="compare-preview-toggle"
+                checked={compareOnPreview}
+                onChange={onCompareOnPreviewChange}
+                label="Compare on Preview"
+            />
+        </div>
+      <hr className="border-t border-[#49454F] my-1" />
+      <div className="p-2">
+        <p className="text-xs text-[#C8C5CA] px-1 pt-1 pb-2">Preview Background</p>
         <div className="grid grid-cols-2 gap-2">
             {bgOptions.map(opt => (
                 <button
@@ -96,6 +193,7 @@ const SettingsPanel: React.FC<{
                 />
             ))}
         </div>
+      </div>
     </div>
   )
 }
@@ -107,11 +205,14 @@ const ColorConverter: React.FC = () => {
   const [outputFormat, setOutputFormat] = useState<ColorFormat>('oklch');
   const [useCssSyntax, setUseCssSyntax] = useState<boolean>(true);
 
-  const [tooltipData, setTooltipData] = useState<{ color: string; top: number; left: number } | null>(null);
+  const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [previewBg, setPreviewBg] = useState('#49454F');
+  const [showColorPreviews, setShowColorPreviews] = useState<boolean>(true);
+  const [compareOnPreview, setCompareOnPreview] = useState<boolean>(true);
   const settingsRef = useRef<HTMLDivElement>(null);
 
+  const inputColors = useMemo(() => inputText.match(COLOR_REGEX) || [], [inputText]);
 
   useEffect(() => {
     const convertedText = convertCssColors(inputText, { format: outputFormat, useCssSyntax });
@@ -138,66 +239,72 @@ const ColorConverter: React.FC = () => {
     }
   }, [outputText]);
 
-  const handleColorHover = useCallback((color: string, event: React.MouseEvent) => {
-    setTooltipData({ color, top: event.clientY + 15, left: event.clientX + 15 });
-  }, []);
+  const handleInputColorHover = useCallback((color: string, index: number, event: React.MouseEvent) => {
+    if (!showColorPreviews) return;
+    setTooltipData({
+      converted: { color },
+      top: event.clientY + 15,
+      left: event.clientX + 15,
+    });
+  }, [showColorPreviews]);
+
+  const handleOutputColorHover = useCallback((convertedColor: string, index: number, event: React.MouseEvent) => {
+    if (!showColorPreviews) return;
+    const originalColor = inputColors[index];
+    setTooltipData({
+      original: originalColor ? { color: originalColor } : undefined,
+      converted: { color: convertedColor },
+      top: event.clientY + 15,
+      left: event.clientX + 15,
+    });
+  }, [inputColors, showColorPreviews]);
 
   const handleColorLeave = useCallback(() => {
     setTooltipData(null);
   }, []);
   
   return (
-    <div className="flex flex-col gap-6">
-        {/* Controls Block */}
-        <div className="bg-[#242429] border border-[#49454F] rounded-3xl p-4 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center flex-wrap gap-x-6 gap-y-4">
-                <div className="flex flex-col">
-                    <label htmlFor="output-format" className="text-xs text-[#C8C5CA] mb-1 px-3">Format</label>
-                     <div className="relative">
-                        <select
-                            id="output-format"
-                            value={outputFormat}
-                            onChange={(e) => setOutputFormat(e.target.value as ColorFormat)}
-                            className="appearance-none bg-[#36343B] border border-[#938F99] rounded-full pl-4 pr-10 py-2.5 text-sm text-[#E6E1E5] focus:ring-2 focus:ring-[#D0BCFF] focus:outline-none focus:border-[#D0BCFF]"
-                            aria-label="Select output color format"
-                        >
-                            <option value="oklch">OKLCH</option>
-                            <option value="hex">HEX</option>
-                            <option value="rgb">RGB</option>
-                            <option value="hsl">HSL</option>
-                        </select>
-                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#C8C5CA]">
-                            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M5.516 7.548c.436-.446 1.144-.446 1.58 0L10 10.405l2.904-2.857c.436-.446 1.144-.446 1.58 0 .436.446.436 1.17 0 1.616l-3.7 3.64c-.436.446-1.144.446-1.58 0l-3.7-3.64c-.436-.446-.436-1.17 0-1.616z"/></svg>
-                        </div>
-                    </div>
-                </div>
-                 <ToggleSwitch
-                    id="css-syntax-toggle"
-                    checked={useCssSyntax}
-                    onChange={setUseCssSyntax}
-                    label="CSS Syntax"
-                />
-            </div>
-            <div className="flex items-center gap-2">
-                <div className="relative" ref={settingsRef}>
-                    <button
-                        onClick={() => setIsSettingsOpen(prev => !prev)}
-                        className="p-2.5 rounded-full hover:bg-[#36343B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#242429] focus:ring-[#D0BCFF]"
-                        aria-label="Open settings"
-                    >
-                        <svg className="w-6 h-6 text-[#C8C5CA]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    </button>
-                    {isSettingsOpen && <SettingsPanel currentBg={previewBg} onBgChange={(color) => { setPreviewBg(color); setIsSettingsOpen(false); }} />}
-                </div>
-                <button
-                    onClick={handleCopy}
-                    className="px-6 py-2.5 text-sm font-bold rounded-full transition-all duration-300 bg-[#B69DF8] text-[#381E72] hover:bg-[#C0A8FA] focus:outline-none focus:ring-4 focus:ring-[#D0BCFF]/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
-                    disabled={!outputText}
-                >
-                    {isCopied ? 'Copied!' : 'Copy Output'}
-                </button>
-            </div>
-        </div>
+    <div className="flex flex-col gap-12">
+        <header className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-5xl sm:text-6xl font-bold text-[#E6E1E5]">
+              Material Color Tool
+            </h1>
+            <p className="mt-4 text-lg text-[#C8C5CA]">
+               A utility to convert CSS colors between formats.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+              <div className="relative" ref={settingsRef}>
+                  <button
+                      onClick={() => setIsSettingsOpen(prev => !prev)}
+                      className="p-2.5 rounded-full hover:bg-[#36343B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#242429] focus:ring-[#D0BCFF]"
+                      aria-label="Open settings"
+                  >
+                      <svg className="w-6 h-6 text-[#C8C5CA]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  </button>
+                  {isSettingsOpen && <SettingsPanel 
+                    currentBg={previewBg} 
+                    onBgChange={(color) => { setPreviewBg(color); setIsSettingsOpen(false); }} 
+                    outputFormat={outputFormat}
+                    onFormatChange={setOutputFormat}
+                    useCssSyntax={useCssSyntax}
+                    onCssSyntaxChange={setUseCssSyntax}
+                    showColorPreviews={showColorPreviews}
+                    onShowColorPreviewsChange={setShowColorPreviews}
+                    compareOnPreview={compareOnPreview}
+                    onCompareOnPreviewChange={setCompareOnPreview}
+                    />}
+              </div>
+              <button
+                  onClick={handleCopy}
+                  className="px-6 py-2.5 text-sm font-bold rounded-full transition-all duration-300 bg-[#B69DF8] text-[#381E72] hover:bg-[#C0A8FA] focus:outline-none focus:ring-4 focus:ring-[#D0BCFF]/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
+                  disabled={!outputText}
+              >
+                  {isCopied ? 'Copied!' : 'Copy Output'}
+              </button>
+          </div>
+        </header>
 
         {/* IO Block */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
@@ -208,9 +315,10 @@ const ColorConverter: React.FC = () => {
                         id="input-css"
                         value={inputText}
                         onValueChange={setInputText}
-                        onColorHover={handleColorHover}
+                        onColorHover={handleInputColorHover}
                         onColorLeave={handleColorLeave}
                         ariaLabel="CSS Input"
+                        previewsEnabled={showColorPreviews}
                     />
                 </div>
             </div>
@@ -222,14 +330,15 @@ const ColorConverter: React.FC = () => {
                         id="output-css"
                         value={outputText}
                         readOnly
-                        onColorHover={handleColorHover}
+                        onColorHover={handleOutputColorHover}
                         onColorLeave={handleColorLeave}
                         ariaLabel="Converted CSS Output"
+                        previewsEnabled={showColorPreviews}
                     />
                 </div>
             </div>
         </div>
-        {tooltipData && <ColorTooltip data={tooltipData} bg={previewBg} />}
+        {showColorPreviews && tooltipData && <ColorTooltip data={tooltipData} bg={previewBg} compareEnabled={compareOnPreview} />}
     </div>
   );
 };
