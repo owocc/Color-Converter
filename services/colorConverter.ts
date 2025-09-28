@@ -7,6 +7,8 @@ export interface ConvertOptions {
     useCssSyntax: boolean;
 }
 
+export const COLOR_REGEX = /(hsl(a?)\([^\)]+\))|(rgb(a?)\([^\)]+\))|(#[a-fA-F0-9]{3,8})|(oklch\([^\)]+\))/g;
+
 // --- PARSING FUNCTIONS ---
 
 function hexToRgb(hex: string): RGB | null {
@@ -236,9 +238,8 @@ function formatOklch(oklch: Oklch, useCssSyntax: boolean): string {
 
 export function convertCssColors(cssString: string, options: ConvertOptions): string {
   if (!cssString) return '';
-  const colorRegex = /(hsl(a?)\([^\)]+\))|(rgb(a?)\([^\)]+\))|(#[a-fA-F0-9]{3,8})|(oklch\([^\)]+\))/g;
   
-  return cssString.replace(colorRegex, (match) => {
+  return cssString.replace(COLOR_REGEX, (match) => {
     let rgb: RGB | null = null;
     const cleanedMatch = match.toLowerCase().trim();
 

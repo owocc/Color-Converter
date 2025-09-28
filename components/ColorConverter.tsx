@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { convertCssColors, ColorFormat } from '../services/colorConverter';
+import CodeEditor from './CodeEditor';
 
 const PLACEHOLDER_TEXT = `/* 
   Paste any CSS with colors here.
@@ -14,6 +15,7 @@ const PLACEHOLDER_TEXT = `/*
   /* Other formats work too */
   --accent-rgb: rgb(103, 80, 164);
   --accent-hsl: hsl(200, 80%, 60%);
+  --transparent: oklch(59.69% 0.154 292.34 / 50%);
 }
 
 .card {
@@ -47,6 +49,56 @@ const ToggleSwitch: React.FC<{
   </label>
 );
 
+const ColorTooltip: React.FC<{
+    data: { color: string; top: number; left: number };
+    bg: string;
+}> = ({ data, bg }) => (
+    <div
+        className="fixed z-10 p-2 rounded-lg shadow-lg text-xs"
+        style={{
+            top: `${data.top}px`,
+            left: `${data.left}px`,
+            backgroundColor: bg,
+            border: '1px solid #49454F'
+        }}
+    >
+        <div className="flex items-center gap-2">
+            <div
+                className="w-5 h-5 rounded border border-[#938F99]/50"
+                style={{ backgroundColor: data.color }}
+            ></div>
+            <span className="font-mono text-[#E6E1E5]">{data.color}</span>
+        </div>
+    </div>
+);
+
+const SettingsPanel: React.FC<{
+  onBgChange: (color: string) => void;
+  currentBg: string;
+}> = ({ onBgChange, currentBg }) => {
+  const bgOptions = [
+    { name: 'Dark', color: '#242429' },
+    { name: 'Grey', color: '#49454F' },
+    { name: 'Light', color: '#E6E1E5' },
+    { name: 'White', color: '#FFFFFF' },
+  ];
+  return (
+    <div className="absolute top-full right-0 mt-2 w-48 bg-[#242429] border border-[#49454F] rounded-2xl shadow-xl z-20 p-2">
+        <p className="text-xs text-[#C8C5CA] px-2 pt-1 pb-2">Preview Background</p>
+        <div className="grid grid-cols-2 gap-2">
+            {bgOptions.map(opt => (
+                <button
+                    key={opt.name}
+                    onClick={() => onBgChange(opt.color)}
+                    className={`h-10 w-full rounded-lg text-xs border-2 ${currentBg === opt.color ? 'border-[#B69DF8]' : 'border-transparent'}`}
+                    style={{ backgroundColor: opt.color }}
+                    aria-label={`Set preview background to ${opt.name}`}
+                />
+            ))}
+        </div>
+    </div>
+  )
+}
 
 const ColorConverter: React.FC = () => {
   const [inputText, setInputText] = useState<string>(PLACEHOLDER_TEXT);
@@ -55,10 +107,28 @@ const ColorConverter: React.FC = () => {
   const [outputFormat, setOutputFormat] = useState<ColorFormat>('oklch');
   const [useCssSyntax, setUseCssSyntax] = useState<boolean>(true);
 
+  const [tooltipData, setTooltipData] = useState<{ color: string; top: number; left: number } | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [previewBg, setPreviewBg] = useState('#49454F');
+  const settingsRef = useRef<HTMLDivElement>(null);
+
+
   useEffect(() => {
     const convertedText = convertCssColors(inputText, { format: outputFormat, useCssSyntax });
     setOutputText(convertedText);
   }, [inputText, outputFormat, useCssSyntax]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+        if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
+            setIsSettingsOpen(false);
+        }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleCopy = useCallback(() => {
     if (outputText) {
@@ -68,9 +138,13 @@ const ColorConverter: React.FC = () => {
     }
   }, [outputText]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInputText(e.target.value);
-  };
+  const handleColorHover = useCallback((color: string, event: React.MouseEvent) => {
+    setTooltipData({ color, top: event.clientY + 15, left: event.clientX + 15 });
+  }, []);
+
+  const handleColorLeave = useCallback(() => {
+    setTooltipData(null);
+  }, []);
   
   return (
     <div className="flex flex-col gap-6">
@@ -104,46 +178,58 @@ const ColorConverter: React.FC = () => {
                     label="CSS Syntax"
                 />
             </div>
-            <button
-                onClick={handleCopy}
-                className="px-6 py-2.5 text-sm font-bold rounded-full transition-all duration-300 bg-[#B69DF8] text-[#381E72] hover:bg-[#C0A8FA] focus:outline-none focus:ring-4 focus:ring-[#D0BCFF]/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
-                disabled={!outputText}
-            >
-                {isCopied ? 'Copied!' : 'Copy Output'}
-            </button>
+            <div className="flex items-center gap-2">
+                <div className="relative" ref={settingsRef}>
+                    <button
+                        onClick={() => setIsSettingsOpen(prev => !prev)}
+                        className="p-2.5 rounded-full hover:bg-[#36343B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#242429] focus:ring-[#D0BCFF]"
+                        aria-label="Open settings"
+                    >
+                        <svg className="w-6 h-6 text-[#C8C5CA]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    </button>
+                    {isSettingsOpen && <SettingsPanel currentBg={previewBg} onBgChange={(color) => { setPreviewBg(color); setIsSettingsOpen(false); }} />}
+                </div>
+                <button
+                    onClick={handleCopy}
+                    className="px-6 py-2.5 text-sm font-bold rounded-full transition-all duration-300 bg-[#B69DF8] text-[#381E72] hover:bg-[#C0A8FA] focus:outline-none focus:ring-4 focus:ring-[#D0BCFF]/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
+                    disabled={!outputText}
+                >
+                    {isCopied ? 'Copied!' : 'Copy Output'}
+                </button>
+            </div>
         </div>
 
         {/* IO Block */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Input */}
-            <div className="bg-[#242429] border border-[#49454F] rounded-3xl p-6 flex flex-col">
-                <label htmlFor="input-css" className="text-sm font-medium mb-3 text-[#C8C5CA]">
-                Input
-                </label>
-                <textarea
-                id="input-css"
-                value={inputText}
-                onChange={handleInputChange}
-                placeholder="Paste your CSS variables here..."
-                className="flex-grow bg-[#1B1B1F] rounded-2xl p-4 font-mono text-sm text-[#C8C5CA] focus:ring-2 focus:ring-[#D0BCFF] focus:outline-none resize-none min-h-[400px] sm:min-h-[500px]"
-                aria-label="CSS Input"
-                />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
+            <div className="flex flex-col">
+                <h2 className="text-sm font-medium mb-3 text-[#C8C5CA] px-2">Input</h2>
+                <div className="bg-[#242429] border border-[#49454F] rounded-3xl p-1 flex flex-col min-h-[400px] sm:min-h-[500px] flex-grow">
+                    <CodeEditor
+                        id="input-css"
+                        value={inputText}
+                        onValueChange={setInputText}
+                        onColorHover={handleColorHover}
+                        onColorLeave={handleColorLeave}
+                        ariaLabel="CSS Input"
+                    />
+                </div>
             </div>
 
-            {/* Output */}
-            <div className="bg-[#242429] border border-[#49454F] rounded-3xl p-6 flex flex-col">
-                <label htmlFor="output-color" className="text-sm font-medium mb-3 text-[#C8C5CA]">
-                Output
-                </label>
-                <textarea
-                id="output-color"
-                value={outputText}
-                readOnly
-                className="flex-grow bg-[#1B1B1F] rounded-2xl p-4 font-mono text-sm text-[#CAC4D0] focus:ring-2 focus:ring-[#D0BCFF] focus:outline-none resize-none min-h-[400px] sm:min-h-[500px]"
-                aria-label="Converted CSS Output"
-                />
+            <div className="flex flex-col">
+                 <h2 className="text-sm font-medium mb-3 text-[#C8C5CA] px-2">Output</h2>
+                 <div className="bg-[#242429] border border-[#49454F] rounded-3xl p-1 flex flex-col min-h-[400px] sm:min-h-[500px] flex-grow">
+                    <CodeEditor
+                        id="output-css"
+                        value={outputText}
+                        readOnly
+                        onColorHover={handleColorHover}
+                        onColorLeave={handleColorLeave}
+                        ariaLabel="Converted CSS Output"
+                    />
+                </div>
             </div>
         </div>
+        {tooltipData && <ColorTooltip data={tooltipData} bg={previewBg} />}
     </div>
   );
 };
