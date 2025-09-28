@@ -358,6 +358,119 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   )
 }
 
+interface SettingsDrawerProps extends SettingsPanelProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
+  isOpen,
+  onClose,
+  onBgChange,
+  currentBg,
+  outputFormat,
+  onFormatChange,
+  useCssSyntax,
+  onCssSyntaxChange,
+  showColorPreviews,
+  onShowColorPreviewsChange,
+  compareOnPreview,
+  onCompareOnPreviewChange,
+  showLineNumbers,
+  onShowLineNumbersChange,
+}) => {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
+  const bgOptions = [
+    { name: 'Dark', color: '#242429' },
+    { name: 'Grey', color: '#49454F' },
+    { name: 'Light', color: '#E6E1E5' },
+    { name: 'White', color: '#FFFFFF' },
+  ];
+
+  return (
+    <div
+      className={`fixed inset-0 z-50 flex justify-center items-end ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+      aria-modal="true"
+      role="dialog"
+      aria-hidden={!isOpen}
+      onClick={onClose}
+      style={{ transition: 'opacity 0.3s ease-in-out' }}
+    >
+      <div className={`absolute inset-0 bg-black/50 ${isOpen ? 'opacity-100' : 'opacity-0'}`} style={{ transition: 'opacity 0.3s ease-in-out' }} />
+      <div
+        className="bg-[#2E2E33] border-t border-[#49454F] rounded-t-2xl w-full max-w-lg p-5 pb-8 shadow-xl relative"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          transform: isOpen ? 'translateY(0)' : 'translateY(100%)',
+          transition: 'transform 0.3s ease-in-out',
+        }}
+      >
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-[#938F99] rounded-full" />
+        
+        <div className="flex flex-col gap-1 w-full mt-4">
+          <div className="p-2">
+            <label htmlFor="output-format-settings-drawer" className="text-xs text-[#C8C5CA] mb-2 block px-1">Output Format</label>
+            <div className="relative">
+              <select
+                id="output-format-settings-drawer"
+                value={outputFormat}
+                onChange={(e) => onFormatChange(e.target.value as ColorFormat)}
+                className="w-full appearance-none bg-[#36343B] border border-[#938F99] rounded-full pl-4 pr-10 py-2.5 text-sm text-[#E6E1E5] focus:ring-2 focus:ring-[#D0BCFF] focus:outline-none focus:border-[#D0BCFF]"
+                aria-label="Select output color format"
+              >
+                <option value="oklch">OKLCH</option>
+                <option value="hex">HEX</option>
+                <option value="rgb">RGB</option>
+                <option value="hsl">HSL</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#C8C5CA]">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M5.516 7.548c.436-.446 1.144-.446 1.58 0L10 10.405l2.904-2.857c.436-.446 1.144-.446 1.58 0 .436.446.436 1.17 0 1.616l-3.7 3.64c-.436.446-1.144.446-1.58 0l-3.7-3.64c-.436-.446-.436-1.17 0-1.616z"/></svg>
+              </div>
+            </div>
+          </div>
+          <div className="px-3 py-2">
+            <ToggleSwitch id="css-syntax-toggle-settings-drawer" checked={useCssSyntax} onChange={onCssSyntaxChange} label="CSS Syntax" />
+          </div>
+          <div className="px-3 py-2">
+            <ToggleSwitch id="color-preview-toggle-settings-drawer" checked={showColorPreviews} onChange={onShowColorPreviewsChange} label="Show Color Previews" />
+          </div>
+          <div className="px-3 py-2">
+            <ToggleSwitch id="compare-preview-toggle-drawer" checked={compareOnPreview} onChange={onCompareOnPreviewChange} label="Compare on Preview" />
+          </div>
+          <div className="px-3 py-2">
+            <ToggleSwitch id="line-numbers-toggle-drawer" checked={showLineNumbers} onChange={onShowLineNumbersChange} label="Show Line Numbers" />
+          </div>
+          <hr className="border-t border-[#49454F] my-1" />
+          <div className="p-2">
+            <p className="text-xs text-[#C8C5CA] px-1 pt-1 pb-2">Preview Background</p>
+            <div className="grid grid-cols-4 gap-2">
+              {bgOptions.map(opt => (
+                <button
+                  key={opt.name}
+                  onClick={() => onBgChange(opt.color)}
+                  className={`h-10 w-full rounded-lg text-xs border-2 ${currentBg === opt.color ? 'border-[#B69DF8]' : 'border-transparent'}`}
+                  style={{ backgroundColor: opt.color }}
+                  aria-label={`Set preview background to ${opt.name}`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ColorConverter: React.FC = () => {
   const [inputText, setInputText] = useState<string>(PLACEHOLDER_TEXT);
   const [outputText, setOutputText] = useState<string>('');
@@ -386,6 +499,8 @@ const ColorConverter: React.FC = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+        if (isMobile) return;
+        
         if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
             setIsSettingsOpen(false);
         }
@@ -394,7 +509,7 @@ const ColorConverter: React.FC = () => {
     return () => {
         document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [isMobile]);
 
   const handleCopy = useCallback(() => {
     if (outputText) {
@@ -450,6 +565,16 @@ const ColorConverter: React.FC = () => {
     setIsDrawerOpen(true);
   }, [inputColors, showColorPreviews]);
   
+  const settingsProps = {
+      outputFormat, onFormatChange: setOutputFormat,
+      useCssSyntax, onCssSyntaxChange: setUseCssSyntax,
+      showColorPreviews, onShowColorPreviewsChange: setShowColorPreviews,
+      compareOnPreview, onCompareOnPreviewChange: setCompareOnPreview,
+      showLineNumbers, onShowLineNumbersChange: setShowLineNumbers,
+      currentBg: previewBg,
+      onBgChange: (color: string) => { setPreviewBg(color); setIsSettingsOpen(false); },
+  };
+
   return (
     <div className="flex flex-col gap-12">
         <header className="flex flex-wrap items-start justify-between gap-4">
@@ -470,20 +595,7 @@ const ColorConverter: React.FC = () => {
                   >
                       <svg className="w-6 h-6 text-[#C8C5CA]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   </button>
-                  {isSettingsOpen && <SettingsPanel 
-                    currentBg={previewBg} 
-                    onBgChange={(color) => { setPreviewBg(color); setIsSettingsOpen(false); }} 
-                    outputFormat={outputFormat}
-                    onFormatChange={setOutputFormat}
-                    useCssSyntax={useCssSyntax}
-                    onCssSyntaxChange={setUseCssSyntax}
-                    showColorPreviews={showColorPreviews}
-                    onShowColorPreviewsChange={setShowColorPreviews}
-                    compareOnPreview={compareOnPreview}
-                    onCompareOnPreviewChange={setCompareOnPreview}
-                    showLineNumbers={showLineNumbers}
-                    onShowLineNumbersChange={setShowLineNumbers}
-                    />}
+                  {!isMobile && isSettingsOpen && <SettingsPanel {...settingsProps} />}
               </div>
               <button
                   onClick={handleCopy}
@@ -534,6 +646,11 @@ const ColorConverter: React.FC = () => {
         </div>
         {!isMobile && showColorPreviews && tooltipData && <ColorTooltip data={tooltipData} compareEnabled={compareOnPreview} />}
         {isMobile && <ColorPreviewDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} data={tooltipData} compareEnabled={compareOnPreview} />}
+        <SettingsDrawer 
+            isOpen={isMobile && isSettingsOpen} 
+            onClose={() => setIsSettingsOpen(false)}
+            {...settingsProps}
+        />
     </div>
   );
 };
