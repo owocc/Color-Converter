@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo, useLayoutEffect } from 'react';
 import { convertCssColors, ColorFormat, COLOR_REGEX } from '../services/colorConverter';
 import CodeEditor from './CodeEditor';
 
@@ -75,14 +75,55 @@ const ColorTooltip: React.FC<{
     bg: string;
     compareEnabled: boolean;
 }> = ({ data, bg, compareEnabled }) => {
+    const tooltipRef = useRef<HTMLDivElement>(null);
+    const [style, setStyle] = useState<React.CSSProperties>({
+        opacity: 0, // Start invisible to avoid flicker
+        top: `${data.top}px`,
+        left: `${data.left}px`,
+    });
+
+    useLayoutEffect(() => {
+        if (tooltipRef.current) {
+            const { innerWidth, innerHeight } = window;
+            const { width, height } = tooltipRef.current.getBoundingClientRect();
+            const offset = 15;
+
+            let newTop = data.top;
+            let newLeft = data.left;
+
+            // Adjust if overflowing the viewport
+            if (newLeft + width + offset > innerWidth) {
+                newLeft = innerWidth - width - offset;
+            }
+            if (newTop + height + offset > innerHeight) {
+                newTop = innerHeight - height - offset;
+            }
+
+            // Ensure it doesn't go off the top/left edges
+            if (newTop < offset) {
+                newTop = offset;
+            }
+            if (newLeft < offset) {
+                newLeft = offset;
+            }
+
+            setStyle({
+                opacity: 1,
+                top: `${newTop}px`,
+                left: `${newLeft}px`,
+                transition: 'opacity 0.1s ease-in',
+            });
+        }
+    }, [data]);
+
     const showComparison = compareEnabled && data.original && data.original.color !== data.converted.color;
 
     return (
         <div
+            ref={tooltipRef}
             className="fixed z-10 p-3 rounded-xl shadow-xl text-xs flex flex-col gap-2"
             style={{
-                top: `${data.top}px`,
-                left: `${data.left}px`,
+                ...style,
                 backgroundColor: bg,
                 border: '1px solid #49454F'
             }}
@@ -115,6 +156,7 @@ const ColorTooltip: React.FC<{
         </div>
     );
 };
+
 
 interface SettingsPanelProps {
   onBgChange: (color: string) => void;
@@ -258,8 +300,8 @@ const ColorConverter: React.FC = () => {
     if (!showColorPreviews) return;
     setTooltipData({
       converted: { color },
-      top: event.clientY + 15,
-      left: event.clientX + 15,
+      top: event.clientY + 20,
+      left: event.clientX + 20,
     });
   }, [showColorPreviews]);
 
@@ -269,8 +311,8 @@ const ColorConverter: React.FC = () => {
     setTooltipData({
       original: originalColor ? { color: originalColor } : undefined,
       converted: { color: convertedColor },
-      top: event.clientY + 15,
-      left: event.clientX + 15,
+      top: event.clientY + 20,
+      left: event.clientX + 20,
     });
   }, [inputColors, showColorPreviews]);
 
