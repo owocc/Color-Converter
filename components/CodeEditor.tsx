@@ -112,13 +112,18 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   const isSimpleInput = !readOnly && !highlightingEnabled;
 
   return (
-    <div className="relative flex-grow flex h-full">
+    <div className="relative flex-grow flex h-full overflow-auto">
       {showLineNumbers && (
         <div
             ref={lineNumbersRef}
             className="line-numbers text-right pl-4 pr-3 pt-4 text-[#938F99] font-mono text-sm select-none overflow-y-hidden bg-[#242429] flex-shrink-0 w-16"
             aria-hidden="true"
-            style={{ lineHeight: '1.5rem' }}
+            style={{
+              lineHeight: '1.5rem',
+              position: 'sticky',
+              left: 0,
+              zIndex: 1,
+            }}
         >
             <pre className="m-0">{lineNumbers}</pre>
         </div>
