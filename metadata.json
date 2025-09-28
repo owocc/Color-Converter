@@ -1,5 +1,5 @@
 {
-  "name": "Color Converter",
+  "name": "Color Convert",
   "description": "A real-time batch color converter that transforms CSS color values (HEX, RGB, HSL) into a selected color space (OKLCH, HEX, RGB, HSL) with configurable output syntax.",
   "requestFramePermissions": []
 }

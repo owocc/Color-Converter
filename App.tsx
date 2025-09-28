@@ -7,7 +7,7 @@ const App: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <ColorConverter />
          <footer className="mt-12 text-center text-[#938F99] text-sm">
-          <p>Designed with Material 3 principles for a clean and efficient experience.</p>
+          <p>© 2025 OWOCC</p>
         </footer>
       </div>
     </main>
