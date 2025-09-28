@@ -36,6 +36,22 @@ const useDebouncedValue = <T,>(value: T, delay: number): T => {
     return debouncedValue;
 };
 
+const useIsMobile = (breakpoint = '(max-width: 768px)') => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(breakpoint);
+    setIsMobile(mediaQuery.matches);
+    
+    const handleResize = () => setIsMobile(mediaQuery.matches);
+
+    mediaQuery.addEventListener('change', handleResize);
+    return () => mediaQuery.removeEventListener('change', handleResize);
+  }, [breakpoint]);
+
+  return isMobile;
+};
+
 
 const ToggleSwitch: React.FC<{
   id: string;
@@ -152,6 +168,81 @@ const ColorTooltip: React.FC<{
                         style={{ backgroundColor: data.converted.color }}
                     ></div>
                     <span className="font-mono text-sm text-[#E6E1E5] break-all">{data.converted.color}</span>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+interface ColorPreviewDrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
+  data: TooltipData | null;
+  compareEnabled: boolean;
+}
+
+const ColorPreviewDrawer: React.FC<ColorPreviewDrawerProps> = ({ isOpen, onClose, data, compareEnabled }) => {
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isOpen]);
+
+    if (!data) return null;
+
+    const showComparison = compareEnabled && data.original && data.original.color !== data.converted.color;
+
+    return (
+        <div
+            className={`fixed inset-0 z-50 flex justify-center items-end ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+            aria-modal="true"
+            role="dialog"
+            aria-hidden={!isOpen}
+            onClick={onClose}
+            style={{ transition: 'opacity 0.3s ease-in-out' }}
+        >
+            <div className={`absolute inset-0 bg-black/50 ${isOpen ? 'opacity-100' : 'opacity-0'}`} style={{ transition: 'opacity 0.3s ease-in-out' }} />
+            <div
+                className="bg-[#2E2E33] border-t border-[#49454F] rounded-t-2xl w-full max-w-lg p-5 pb-8 shadow-xl relative"
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                    transform: isOpen ? 'translateY(0)' : 'translateY(100%)',
+                    transition: 'transform 0.3s ease-in-out',
+                }}
+            >
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-[#938F99] rounded-full" />
+                
+                <div className="flex flex-col gap-4 mt-4">
+                    {showComparison && data.original && (
+                        <>
+                            <div className="flex flex-col items-start gap-1.5">
+                                <span className="text-xs text-[#C8C5CA] opacity-80 px-1">Original</span>
+                                <div className="flex items-center gap-3 w-full">
+                                    <div
+                                        className="w-8 h-8 rounded-full border border-[#938F99]/50 flex-shrink-0"
+                                        style={{ backgroundColor: data.original.color }}
+                                    ></div>
+                                    <span className="font-mono text-base text-[#E6E1E5] break-all">{data.original.color}</span>
+                                </div>
+                            </div>
+                            <hr className="border-t border-[#938F99]/30 my-1"/>
+                        </>
+                    )}
+                    <div className="flex flex-col items-start gap-1.5">
+                        {showComparison && <span className="text-xs text-[#C8C5CA] opacity-80 px-1">Converted</span>}
+                        <div className="flex items-center gap-3 w-full">
+                            <div
+                                className="w-8 h-8 rounded-full border border-[#938F99]/50 flex-shrink-0"
+                                style={{ backgroundColor: data.converted.color }}
+                            ></div>
+                            <span className="font-mono text-base text-[#E6E1E5] break-all">{data.converted.color}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -280,9 +371,12 @@ const ColorConverter: React.FC = () => {
   const [showColorPreviews, setShowColorPreviews] = useState<boolean>(true);
   const [compareOnPreview, setCompareOnPreview] = useState<boolean>(true);
   const [showLineNumbers, setShowLineNumbers] = useState<boolean>(true);
+  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const settingsRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   const inputColors = useMemo(() => inputText.match(COLOR_REGEX) || [], [inputText]);
+  const outputColors = useMemo(() => outputText.match(COLOR_REGEX) || [], [outputText]);
   const debouncedInputText = useDebouncedValue(inputText, 200);
 
   useEffect(() => {
@@ -333,6 +427,28 @@ const ColorConverter: React.FC = () => {
   const handleColorLeave = useCallback(() => {
     setTooltipData(null);
   }, []);
+
+  const handleInputColorClick = useCallback((color: string, index: number) => {
+    if (!showColorPreviews) return;
+    const convertedColor = outputColors[index];
+    setTooltipData({
+        original: { color: color },
+        converted: { color: convertedColor || "..." },
+        top: 0, left: 0
+    });
+    setIsDrawerOpen(true);
+  }, [outputColors, showColorPreviews]);
+
+  const handleOutputColorClick = useCallback((convertedColor: string, index: number) => {
+    if (!showColorPreviews) return;
+    const originalColor = inputColors[index];
+    setTooltipData({
+        original: originalColor ? { color: originalColor } : undefined,
+        converted: { color: convertedColor },
+        top: 0, left: 0
+    });
+    setIsDrawerOpen(true);
+  }, [inputColors, showColorPreviews]);
   
   return (
     <div className="flex flex-col gap-12">
@@ -383,13 +499,14 @@ const ColorConverter: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
             <div className="flex flex-col min-h-0 min-w-0">
                 <h2 className="text-sm font-medium mb-3 text-[#C8C5CA] px-2">Input</h2>
-                <div className="bg-[#242429] border border-[#49454F] rounded-3xl p-1 flex flex-col min-h-[400px] sm:min-h-[500px] flex-grow">
+                <div className="bg-[#242429] border border-[#49454F] rounded-3xl p-1 flex flex-col min-h-[400px] sm:min-h-[500px] overflow-hidden flex-grow">
                     <CodeEditor
                         id="input-css"
                         value={inputText}
                         onValueChange={setInputText}
-                        onColorHover={handleInputColorHover}
-                        onColorLeave={handleColorLeave}
+                        onColorHover={!isMobile ? handleInputColorHover : undefined}
+                        onColorLeave={!isMobile ? handleColorLeave : undefined}
+                        onColorClick={isMobile ? handleInputColorClick : undefined}
                         ariaLabel="CSS Input"
                         previewsEnabled={showColorPreviews}
                         highlightingEnabled={false}
@@ -400,13 +517,14 @@ const ColorConverter: React.FC = () => {
 
             <div className="flex flex-col min-h-0 min-w-0">
                  <h2 className="text-sm font-medium mb-3 text-[#C8C5CA] px-2">Output</h2>
-                 <div className="bg-[#242429] border border-[#49454F] rounded-3xl p-1 flex flex-col min-h-[400px] sm:min-h-[500px] flex-grow">
+                 <div className="bg-[#242429] border border-[#49454F] rounded-3xl p-1 flex flex-col min-h-[400px] sm:min-h-[500px] overflow-hidden flex-grow">
                     <CodeEditor
                         id="output-css"
                         value={outputText}
                         readOnly
-                        onColorHover={handleOutputColorHover}
-                        onColorLeave={handleColorLeave}
+                        onColorHover={!isMobile ? handleOutputColorHover : undefined}
+                        onColorLeave={!isMobile ? handleColorLeave : undefined}
+                        onColorClick={isMobile ? handleOutputColorClick : undefined}
                         ariaLabel="Converted CSS Output"
                         previewsEnabled={showColorPreviews}
                         showLineNumbers={showLineNumbers}
@@ -414,7 +532,8 @@ const ColorConverter: React.FC = () => {
                 </div>
             </div>
         </div>
-        {showColorPreviews && tooltipData && <ColorTooltip data={tooltipData} compareEnabled={compareOnPreview} />}
+        {!isMobile && showColorPreviews && tooltipData && <ColorTooltip data={tooltipData} compareEnabled={compareOnPreview} />}
+        {isMobile && <ColorPreviewDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} data={tooltipData} compareEnabled={compareOnPreview} />}
     </div>
   );
 };

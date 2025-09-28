@@ -5,8 +5,9 @@ interface CodeEditorProps {
   value: string;
   onValueChange?: (value: string) => void;
   readOnly?: boolean;
-  onColorHover: (color: string, index: number, event: React.MouseEvent) => void;
-  onColorLeave: () => void;
+  onColorHover?: (color: string, index: number, event: React.MouseEvent) => void;
+  onColorLeave?: () => void;
+  onColorClick?: (color: string, index: number) => void;
   id: string;
   ariaLabel: string;
   previewsEnabled: boolean;
@@ -20,6 +21,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   readOnly = false,
   onColorHover,
   onColorLeave,
+  onColorClick,
   id,
   ariaLabel,
   previewsEnabled,
@@ -62,16 +64,19 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
             parts.push(value.substring(lastIndex, index));
         }
 
+        const canInteract = previewsEnabled && (onColorHover || onColorClick);
+
         parts.push(
             <span
                 key={`${index}-${color}`}
                 className="color-token"
-                onMouseEnter={previewsEnabled ? (e) => onColorHover(color, currentIndex, e) : undefined}
-                onMouseLeave={previewsEnabled ? onColorLeave : undefined}
+                onClick={onColorClick ? () => onColorClick(color, currentIndex) : undefined}
+                onMouseEnter={onColorHover ? (e) => onColorHover(color, currentIndex, e) : undefined}
+                onMouseLeave={onColorLeave ? onColorLeave : undefined}
                 style={{
                     backgroundColor: 'rgba(208, 188, 255, 0.08)',
                     borderRadius: '3px',
-                    cursor: previewsEnabled ? 'pointer' : 'default',
+                    cursor: canInteract ? 'pointer' : 'default',
                     padding: '1px 2px',
                     margin: '-1px -2px',
                 }}
@@ -88,7 +93,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
     }
 
     return parts;
-  }, [value, onColorHover, onColorLeave, previewsEnabled, highlightingEnabled]);
+  }, [value, onColorHover, onColorLeave, onColorClick, previewsEnabled, highlightingEnabled]);
 
   const lineCount = useMemo(() => {
     const count = value.split('\n').length;
