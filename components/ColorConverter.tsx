@@ -300,6 +300,8 @@ interface SettingsPanelProps {
   onShowLineNumbersChange: (checked: boolean) => void;
   viewMode: 'dual' | 'single';
   onViewModeChange: (mode: 'dual' | 'single') => void;
+  showRayButton: boolean;
+  onShowRayButtonChange: (checked: boolean) => void;
 }
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({
@@ -317,6 +319,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onShowLineNumbersChange,
   viewMode,
   onViewModeChange,
+  showRayButton,
+  onShowRayButtonChange,
 }) => {
   const bgOptions = [
     { name: 'Dark', color: '#242429' },
@@ -376,6 +380,14 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           checked={showLineNumbers}
           onChange={onShowLineNumbersChange}
           label="Show Line Numbers"
+        />
+      </div>
+      <div className="px-3 py-2">
+        <ToggleSwitch
+          id="ray-so-toggle-settings"
+          checked={showRayButton}
+          onChange={onShowRayButtonChange}
+          label="Show 'Open in Ray.so'"
         />
       </div>
       <hr className="border-t border-[#49454F] my-1" />
@@ -441,6 +453,8 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   onShowLineNumbersChange,
   viewMode,
   onViewModeChange,
+  showRayButton,
+  onShowRayButtonChange,
 }) => {
   useEffect(() => {
     if (isOpen) {
@@ -513,6 +527,14 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
           <div className="px-3 py-2">
             <ToggleSwitch id="line-numbers-toggle-drawer" checked={showLineNumbers} onChange={onShowLineNumbersChange} label="Show Line Numbers" />
           </div>
+          <div className="px-3 py-2">
+            <ToggleSwitch
+              id="ray-so-toggle-drawer"
+              checked={showRayButton}
+              onChange={onShowRayButtonChange}
+              label="Show 'Open in Ray.so'"
+            />
+          </div>
           <hr className="border-t border-[#49454F] my-1" />
            <div className="p-2">
               <p className="text-xs text-[#C8C5CA] px-1 pt-1 pb-2">View Mode</p>
@@ -569,6 +591,7 @@ const ColorConverter: React.FC = () => {
   const [showColorPreviews, setShowColorPreviews] = useLocalStorage<boolean>('settings:showColorPreviews', true);
   const [compareOnPreview, setCompareOnPreview] = useLocalStorage<boolean>('settings:compareOnPreview', true);
   const [showLineNumbers, setShowLineNumbers] = useLocalStorage<boolean>('settings:showLineNumbers', true);
+  const [showRayButton, setShowRayButton] = useLocalStorage<boolean>('settings:showRayButton', true);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const settingsRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -665,12 +688,25 @@ const ColorConverter: React.FC = () => {
     setIsDrawerOpen(true);
   }, [inputColors, showColorPreviews]);
 
+  const raySoUrl = useMemo(() => {
+    if (!outputText) return '#';
+    try {
+      const encoded = encodeStringToBase64(outputText);
+      const title = encodeURIComponent('Color Convert Output');
+      return `https://www.ray.so/#code=${encoded}&title=${title}`;
+    } catch (error) {
+      console.error("Failed to encode for Ray.so:", error);
+      return '#';
+    }
+  }, [outputText]);
+
   const settingsProps = {
     outputFormat, onFormatChange: setOutputFormat,
     useCssSyntax, onCssSyntaxChange: setUseCssSyntax,
     showColorPreviews, onShowColorPreviewsChange: setShowColorPreviews,
     compareOnPreview, onCompareOnPreviewChange: setCompareOnPreview,
     showLineNumbers, onShowLineNumbersChange: setShowLineNumbers,
+    showRayButton, onShowRayButtonChange: setShowRayButton,
     currentBg: previewBg,
     onBgChange: (color: string) => { setPreviewBg(color); setIsSettingsOpen(false); },
     viewMode,
@@ -710,6 +746,21 @@ const ColorConverter: React.FC = () => {
             </button>
             {!isMobile && isSettingsOpen && <SettingsPanel {...settingsProps} />}
           </div>
+          {showRayButton && (
+             <a
+              href={outputText ? raySoUrl : undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`p-2.5 rounded-full transition-colors ${!outputText ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#36343B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#242429] focus:ring-[#D0BCFF]'}`}
+              aria-label="Open output in Ray.so"
+              title="Open output in Ray.so"
+              onClick={(e) => { if (!outputText) e.preventDefault(); }}
+            >
+              <svg className="w-6 h-6 text-[#C8C5CA]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </a>
+          )}
           <button
             onClick={handleCopy}
             className="px-6 py-2.5 text-sm font-bold rounded-full transition-all duration-300 bg-[#B69DF8] text-[#381E72] hover:bg-[#C0A8FA] focus:outline-none focus:ring-4 focus:ring-[#D0BCFF]/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
