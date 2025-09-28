@@ -11,6 +11,7 @@ interface CodeEditorProps {
   ariaLabel: string;
   previewsEnabled: boolean;
   highlightingEnabled?: boolean;
+  showLineNumbers: boolean;
 }
 
 const CodeEditor: React.FC<CodeEditorProps> = ({
@@ -23,6 +24,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   ariaLabel,
   previewsEnabled,
   highlightingEnabled = true,
+  showLineNumbers,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const highlightRef = useRef<HTMLPreElement>(null);
@@ -111,14 +113,16 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
 
   return (
     <div className="relative flex-grow flex h-full overflow-hidden">
-      <div
-        ref={lineNumbersRef}
-        className="line-numbers text-right pl-4 pr-3 pt-4 text-[#938F99] font-mono text-sm select-none overflow-y-hidden bg-[#242429]"
-        aria-hidden="true"
-        style={{ lineHeight: '1.5rem' }}
-      >
-        <pre className="m-0">{lineNumbers}</pre>
-      </div>
+      {showLineNumbers && (
+        <div
+            ref={lineNumbersRef}
+            className="line-numbers text-right pl-4 pr-3 pt-4 text-[#938F99] font-mono text-sm select-none overflow-y-hidden bg-[#242429] flex-shrink-0 w-16"
+            aria-hidden="true"
+            style={{ lineHeight: '1.5rem' }}
+        >
+            <pre className="m-0">{lineNumbers}</pre>
+        </div>
+      )}
       
       {isSimpleInput ? (
           <textarea

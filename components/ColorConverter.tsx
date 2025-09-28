@@ -170,6 +170,8 @@ interface SettingsPanelProps {
   onShowColorPreviewsChange: (checked: boolean) => void;
   compareOnPreview: boolean;
   onCompareOnPreviewChange: (checked: boolean) => void;
+  showLineNumbers: boolean;
+  onShowLineNumbersChange: (checked: boolean) => void;
 }
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({ 
@@ -182,7 +184,9 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     showColorPreviews,
     onShowColorPreviewsChange,
     compareOnPreview,
-    onCompareOnPreviewChange
+    onCompareOnPreviewChange,
+    showLineNumbers,
+    onShowLineNumbersChange,
 }) => {
   const bgOptions = [
     { name: 'Dark', color: '#242429' },
@@ -236,6 +240,14 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 label="Compare on Preview"
             />
         </div>
+        <div className="px-3 py-2">
+            <ToggleSwitch
+                id="line-numbers-toggle"
+                checked={showLineNumbers}
+                onChange={onShowLineNumbersChange}
+                label="Show Line Numbers"
+            />
+        </div>
       <hr className="border-t border-[#49454F] my-1" />
       <div className="p-2">
         <p className="text-xs text-[#C8C5CA] px-1 pt-1 pb-2">Preview Background</p>
@@ -267,6 +279,7 @@ const ColorConverter: React.FC = () => {
   const [previewBg, setPreviewBg] = useState('#49454F');
   const [showColorPreviews, setShowColorPreviews] = useState<boolean>(true);
   const [compareOnPreview, setCompareOnPreview] = useState<boolean>(true);
+  const [showLineNumbers, setShowLineNumbers] = useState<boolean>(true);
   const settingsRef = useRef<HTMLDivElement>(null);
 
   const inputColors = useMemo(() => inputText.match(COLOR_REGEX) || [], [inputText]);
@@ -352,6 +365,8 @@ const ColorConverter: React.FC = () => {
                     onShowColorPreviewsChange={setShowColorPreviews}
                     compareOnPreview={compareOnPreview}
                     onCompareOnPreviewChange={setCompareOnPreview}
+                    showLineNumbers={showLineNumbers}
+                    onShowLineNumbersChange={setShowLineNumbers}
                     />}
               </div>
               <button
@@ -378,6 +393,7 @@ const ColorConverter: React.FC = () => {
                         ariaLabel="CSS Input"
                         previewsEnabled={showColorPreviews}
                         highlightingEnabled={false}
+                        showLineNumbers={showLineNumbers}
                     />
                 </div>
             </div>
@@ -393,6 +409,7 @@ const ColorConverter: React.FC = () => {
                         onColorLeave={handleColorLeave}
                         ariaLabel="Converted CSS Output"
                         previewsEnabled={showColorPreviews}
+                        showLineNumbers={showLineNumbers}
                     />
                 </div>
             </div>
