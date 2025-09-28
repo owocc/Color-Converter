@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useCallback } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { COLOR_REGEX } from '../services/colorConverter';
 
 interface CodeEditorProps {
@@ -10,6 +10,7 @@ interface CodeEditorProps {
   id: string;
   ariaLabel: string;
   previewsEnabled: boolean;
+  highlightingEnabled?: boolean;
 }
 
 const CodeEditor: React.FC<CodeEditorProps> = ({
@@ -21,6 +22,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   id,
   ariaLabel,
   previewsEnabled,
+  highlightingEnabled = true,
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const highlightRef = useRef<HTMLPreElement>(null);
@@ -31,7 +33,8 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
     if (lineNumbersRef.current) {
       lineNumbersRef.current.scrollTop = scrollTop;
     }
-    if (!readOnly && highlightRef.current) { // Sync highlight layer from textarea scroll
+    // Sync highlight layer from textarea scroll, if it exists
+    if (!readOnly && highlightRef.current) { 
         highlightRef.current.scrollTop = scrollTop;
         highlightRef.current.scrollLeft = scrollLeft;
     }
@@ -39,6 +42,9 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   
   const highlightContent = useMemo(() => {
     if (!value) return null;
+    if (!highlightingEnabled) {
+      return value;
+    }
 
     const parts: (string | React.ReactNode)[] = [];
     let lastIndex = 0;
@@ -80,7 +86,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
     }
 
     return parts;
-  }, [value, onColorHover, onColorLeave, previewsEnabled]);
+  }, [value, onColorHover, onColorLeave, previewsEnabled, highlightingEnabled]);
 
   const lineCount = useMemo(() => {
     const count = value.split('\n').length;
@@ -100,6 +106,8 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
     wordBreak: 'keep-all',
     overflowWrap: 'normal'
   };
+  
+  const isSimpleInput = !readOnly && !highlightingEnabled;
 
   return (
     <div className="relative flex-grow flex h-full overflow-hidden">
@@ -111,35 +119,53 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
       >
         <pre className="m-0">{lineNumbers}</pre>
       </div>
-      <div className="relative flex-grow h-full">
-        {!readOnly && (
-            <textarea
-                id={id}
-                ref={textareaRef}
-                value={value}
-                onChange={(e) => onValueChange && onValueChange(e.target.value)}
-                onScroll={handleScroll}
-                className="absolute inset-0 w-full h-full resize-none z-10 bg-transparent text-transparent caret-[#E6E1E5] focus:outline-none"
-                style={sharedStyles}
-                aria-label={ariaLabel}
-                spellCheck="false"
-                autoCapitalize="off"
-                autoComplete="off"
-                autoCorrect="off"
-            />
-        )}
-        <pre
-          ref={highlightRef}
-          className={`w-full h-full m-0 z-0 text-[#C8C5CA] ${readOnly ? 'overflow-auto' : 'overflow-hidden pointer-events-none'}`}
-          style={sharedStyles}
-          onScroll={readOnly ? handleScroll : undefined}
-          aria-hidden="true"
-        >
-          <code className={readOnly ? 'pointer-events-auto' : ''}>
-            {highlightContent}
-          </code>
-        </pre>
-      </div>
+      
+      {isSimpleInput ? (
+          <textarea
+            id={id}
+            ref={textareaRef}
+            value={value}
+            onChange={(e) => onValueChange && onValueChange(e.target.value)}
+            onScroll={handleScroll}
+            className="flex-grow w-full h-full resize-none bg-transparent text-[#C8C5CA] caret-[#E6E1E5] focus:outline-none"
+            style={sharedStyles}
+            aria-label={ariaLabel}
+            spellCheck="false"
+            autoCapitalize="off"
+            autoComplete="off"
+            autoCorrect="off"
+        />
+      ) : (
+        <div className="relative flex-grow h-full">
+            {!readOnly && (
+                <textarea
+                    id={id}
+                    ref={textareaRef}
+                    value={value}
+                    onChange={(e) => onValueChange && onValueChange(e.target.value)}
+                    onScroll={handleScroll}
+                    className="absolute inset-0 w-full h-full resize-none z-10 bg-transparent text-transparent caret-[#E6E1E5] focus:outline-none"
+                    style={sharedStyles}
+                    aria-label={ariaLabel}
+                    spellCheck="false"
+                    autoCapitalize="off"
+                    autoComplete="off"
+                    autoCorrect="off"
+                />
+            )}
+            <pre
+              ref={highlightRef}
+              className={`w-full h-full m-0 z-0 text-[#C8C5CA] ${readOnly ? 'overflow-auto' : 'overflow-hidden pointer-events-none'}`}
+              style={sharedStyles}
+              onScroll={readOnly ? handleScroll : undefined}
+              aria-hidden="true"
+            >
+              <code className={readOnly ? 'pointer-events-auto' : ''}>
+                {highlightContent}
+              </code>
+            </pre>
+        </div>
+      )}
     </div>
   );
 };

@@ -23,6 +23,20 @@ const PLACEHOLDER_TEXT = `/*
   color: #FFFFFF;
 }`;
 
+const useDebouncedValue = <T,>(value: T, delay: number): T => {
+    const [debouncedValue, setDebouncedValue] = useState<T>(value);
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+    return debouncedValue;
+};
+
+
 const ToggleSwitch: React.FC<{
   id: string;
   checked: boolean;
@@ -213,11 +227,12 @@ const ColorConverter: React.FC = () => {
   const settingsRef = useRef<HTMLDivElement>(null);
 
   const inputColors = useMemo(() => inputText.match(COLOR_REGEX) || [], [inputText]);
+  const debouncedInputText = useDebouncedValue(inputText, 200);
 
   useEffect(() => {
-    const convertedText = convertCssColors(inputText, { format: outputFormat, useCssSyntax });
+    const convertedText = convertCssColors(debouncedInputText, { format: outputFormat, useCssSyntax });
     setOutputText(convertedText);
-  }, [inputText, outputFormat, useCssSyntax]);
+  }, [debouncedInputText, outputFormat, useCssSyntax]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -319,6 +334,7 @@ const ColorConverter: React.FC = () => {
                         onColorLeave={handleColorLeave}
                         ariaLabel="CSS Input"
                         previewsEnabled={showColorPreviews}
+                        highlightingEnabled={false}
                     />
                 </div>
             </div>
