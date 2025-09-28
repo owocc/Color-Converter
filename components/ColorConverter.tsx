@@ -263,6 +263,8 @@ interface SettingsPanelProps {
   onCompareOnPreviewChange: (checked: boolean) => void;
   showLineNumbers: boolean;
   onShowLineNumbersChange: (checked: boolean) => void;
+  viewMode: 'dual' | 'single';
+  onViewModeChange: (mode: 'dual' | 'single') => void;
 }
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({
@@ -278,6 +280,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onCompareOnPreviewChange,
   showLineNumbers,
   onShowLineNumbersChange,
+  viewMode,
+  onViewModeChange,
 }) => {
   const bgOptions = [
     { name: 'Dark', color: '#242429' },
@@ -341,6 +345,28 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       </div>
       <hr className="border-t border-[#49454F] my-1" />
       <div className="p-2">
+        <p className="text-xs text-[#C8C5CA] px-1 pt-1 pb-2">View Mode</p>
+        <div className="flex items-center p-0.5 bg-[#36343B] border border-[#49454F] rounded-full w-full">
+            <button
+                onClick={() => onViewModeChange('dual')}
+                className={`p-2 rounded-full transition-colors w-1/2 flex justify-center ${viewMode === 'dual' ? 'bg-[#4A4458]' : 'hover:bg-[#4A4458]/50'}`}
+                aria-label="Dual column view"
+                title="Dual column view"
+            >
+                <svg className="w-5 h-5 text-[#C8C5CA]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m5 10V7M5 17h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg>
+            </button>
+            <button
+                onClick={() => onViewModeChange('single')}
+                className={`p-2 rounded-full transition-colors w-1/2 flex justify-center ${viewMode === 'single' ? 'bg-[#4A4458]' : 'hover:bg-[#4A4458]/50'}`}
+                aria-label="Single column view"
+                title="Single column view"
+            >
+                <svg className="w-5 h-5 text-[#C8C5CA]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 17h18a2 2 0 002-2V9a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg>
+            </button>
+        </div>
+      </div>
+      <hr className="border-t border-[#49454F] my-1" />
+      <div className="p-2">
         <p className="text-xs text-[#C8C5CA] px-1 pt-1 pb-2">Preview Background</p>
         <div className="grid grid-cols-2 gap-2">
           {bgOptions.map(opt => (
@@ -378,6 +404,8 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   onCompareOnPreviewChange,
   showLineNumbers,
   onShowLineNumbersChange,
+  viewMode,
+  onViewModeChange,
 }) => {
   useEffect(() => {
     if (isOpen) {
@@ -451,6 +479,28 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             <ToggleSwitch id="line-numbers-toggle-drawer" checked={showLineNumbers} onChange={onShowLineNumbersChange} label="Show Line Numbers" />
           </div>
           <hr className="border-t border-[#49454F] my-1" />
+           <div className="p-2">
+              <p className="text-xs text-[#C8C5CA] px-1 pt-1 pb-2">View Mode</p>
+              <div className="flex items-center p-0.5 bg-[#36343B] border border-[#49454F] rounded-full w-full">
+                  <button
+                      onClick={() => onViewModeChange('dual')}
+                      className={`p-2.5 rounded-full transition-colors w-1/2 flex justify-center ${viewMode === 'dual' ? 'bg-[#4A4458]' : 'hover:bg-[#4A4458]/50'}`}
+                      aria-label="Dual column view"
+                      title="Dual column view"
+                  >
+                      <svg className="w-6 h-6 text-[#C8C5CA]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m5 10V7M5 17h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg>
+                  </button>
+                  <button
+                      onClick={() => onViewModeChange('single')}
+                      className={`p-2.5 rounded-full transition-colors w-1/2 flex justify-center ${viewMode === 'single' ? 'bg-[#4A4458]' : 'hover:bg-[#4A4458]/50'}`}
+                      aria-label="Single column view"
+                      title="Single column view"
+                  >
+                      <svg className="w-6 h-6 text-[#C8C5CA]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 17h18a2 2 0 002-2V9a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2z"></path></svg>
+                  </button>
+              </div>
+            </div>
+          <hr className="border-t border-[#49454F] my-1" />
           <div className="p-2">
             <p className="text-xs text-[#C8C5CA] px-1 pt-1 pb-2">Preview Background</p>
             <div className="grid grid-cols-4 gap-2">
@@ -487,6 +537,9 @@ const ColorConverter: React.FC = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const settingsRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const [viewMode, setViewMode] = useLocalStorage<'dual' | 'single'>('settings:viewMode', 'dual');
+  const [activeSingleView, setActiveSingleView] = useState<'input' | 'output'>('input');
+
 
   const inputColors = useMemo(() => inputText.match(COLOR_REGEX) || [], [inputText]);
   const outputColors = useMemo(() => outputText.match(COLOR_REGEX) || [], [outputText]);
@@ -573,6 +626,8 @@ const ColorConverter: React.FC = () => {
     showLineNumbers, onShowLineNumbersChange: setShowLineNumbers,
     currentBg: previewBg,
     onBgChange: (color: string) => { setPreviewBg(color); setIsSettingsOpen(false); },
+    viewMode,
+    onViewModeChange: setViewMode,
   };
 
   return (
@@ -619,39 +674,84 @@ const ColorConverter: React.FC = () => {
       </header>
 
       {/* IO Block */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
-        <div className="flex flex-col min-h-0 min-w-0">
-          <h2 className="text-sm font-medium mb-3 text-[#C8C5CA] px-2">Input</h2>
-          <div className="bg-[#242429] border border-[#49454F] rounded-3xl p-1 flex flex-col min-h-[400px] sm:min-h-[500px] overflow-hidden flex-grow">
-            <CodeEditor
-              id="input-css"
-              value={inputText}
-              onValueChange={setInputText}
-              onColorHover={!isMobile ? handleInputColorHover : undefined}
-              onColorLeave={!isMobile ? handleColorLeave : undefined}
-              onColorClick={isMobile ? handleInputColorClick : undefined}
-              ariaLabel="CSS Input"
-              previewsEnabled={showColorPreviews}
-              highlightingEnabled={false}
-              showLineNumbers={showLineNumbers}
-            />
+      <div className="flex flex-col">
+        {viewMode === 'single' && (
+          <div role="tablist" aria-label="Editor view" className="flex items-center gap-2 p-1 bg-[#36343B] rounded-full mb-4 self-start">
+            <button
+              role="tab"
+              aria-selected={activeSingleView === 'input'}
+              id="tab-input"
+              aria-controls="panel-input"
+              onClick={() => setActiveSingleView('input')}
+              className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${activeSingleView === 'input' ? 'bg-[#4A4458] text-[#E6E1E5]' : 'text-[#C8C5CA] hover:bg-[#4A4458]/50'}`}
+            >
+              Input
+            </button>
+            <button
+              role="tab"
+              aria-selected={activeSingleView === 'output'}
+              id="tab-output"
+              aria-controls="panel-output"
+              onClick={() => setActiveSingleView('output')}
+              className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${activeSingleView === 'output' ? 'bg-[#4A4458] text-[#E6E1E5]' : 'text-[#C8C5CA] hover:bg-[#4A4458]/50'}`}
+            >
+              Output
+            </button>
           </div>
-        </div>
+        )}
 
-        <div className="flex flex-col min-h-0 min-w-0">
-          <h2 className="text-sm font-medium mb-3 text-[#C8C5CA] px-2">Output</h2>
-          <div className="bg-[#242429] border border-[#49454F] rounded-3xl p-1 flex flex-col min-h-[400px] sm:min-h-[500px] overflow-hidden flex-grow">
-            <CodeEditor
-              id="output-css"
-              value={outputText}
-              readOnly
-              onColorHover={!isMobile ? handleOutputColorHover : undefined}
-              onColorLeave={!isMobile ? handleColorLeave : undefined}
-              onColorClick={isMobile ? handleOutputColorClick : undefined}
-              ariaLabel="Converted CSS Output"
-              previewsEnabled={showColorPreviews}
-              showLineNumbers={showLineNumbers}
-            />
+        <div className={`grid ${viewMode === 'dual' ? 'md:grid-cols-2' : 'grid-cols-1'} grid-cols-1 gap-x-6 gap-y-8`}>
+          <div
+            role="tabpanel"
+            id="panel-input"
+            aria-labelledby="tab-input"
+            className={`${viewMode === 'single' && activeSingleView !== 'input' ? 'hidden' : 'flex flex-col min-h-0 min-w-0'}`}
+          >
+            {viewMode === 'dual' && (
+              <div className="flex items-center justify-between mb-3 px-2">
+                <h2 className="text-sm font-medium text-[#C8C5CA]">Input</h2>
+              </div>
+            )}
+            <div className="bg-[#242429] border border-[#49454F] rounded-3xl p-1 flex flex-col min-h-[400px] sm:min-h-[500px] overflow-hidden flex-grow">
+              <CodeEditor
+                id="input-css"
+                value={inputText}
+                onValueChange={setInputText}
+                onColorHover={!isMobile ? handleInputColorHover : undefined}
+                onColorLeave={!isMobile ? handleColorLeave : undefined}
+                onColorClick={isMobile ? handleInputColorClick : undefined}
+                ariaLabel="CSS Input"
+                previewsEnabled={showColorPreviews}
+                highlightingEnabled={false}
+                showLineNumbers={showLineNumbers}
+              />
+            </div>
+          </div>
+
+          <div
+            role="tabpanel"
+            id="panel-output"
+            aria-labelledby="tab-output"
+            className={`${viewMode === 'single' && activeSingleView !== 'output' ? 'hidden' : 'flex flex-col min-h-0 min-w-0'}`}
+          >
+            {viewMode === 'dual' && (
+              <div className="flex items-center justify-between mb-3 px-2">
+                <h2 className="text-sm font-medium text-[#C8C5CA]">Output</h2>
+              </div>
+            )}
+            <div className="bg-[#242429] border border-[#49454F] rounded-3xl p-1 flex flex-col min-h-[400px] sm:min-h-[500px] overflow-hidden flex-grow">
+              <CodeEditor
+                id="output-css"
+                value={outputText}
+                readOnly
+                onColorHover={!isMobile ? handleOutputColorHover : undefined}
+                onColorLeave={!isMobile ? handleColorLeave : undefined}
+                onColorClick={isMobile ? handleOutputColorClick : undefined}
+                ariaLabel="Converted CSS Output"
+                previewsEnabled={showColorPreviews}
+                showLineNumbers={showLineNumbers}
+              />
+            </div>
           </div>
         </div>
       </div>
