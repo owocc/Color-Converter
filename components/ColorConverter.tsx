@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo, useLayoutEffect } from 'react';
 import { convertCssColors, ColorFormat, COLOR_REGEX } from '../services/colorConverter';
 import CodeEditor from './CodeEditor';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 
 const PLACEHOLDER_TEXT = `/* 
   Paste any CSS with colors here.
@@ -474,15 +475,15 @@ const ColorConverter: React.FC = () => {
   const [inputText, setInputText] = useState<string>(PLACEHOLDER_TEXT);
   const [outputText, setOutputText] = useState<string>('');
   const [isCopied, setIsCopied] = useState<boolean>(false);
-  const [outputFormat, setOutputFormat] = useState<ColorFormat>('oklch');
-  const [useCssSyntax, setUseCssSyntax] = useState<boolean>(true);
+  const [outputFormat, setOutputFormat] = useLocalStorage<ColorFormat>('settings:outputFormat', 'oklch');
+  const [useCssSyntax, setUseCssSyntax] = useLocalStorage<boolean>('settings:useCssSyntax', true);
 
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [previewBg, setPreviewBg] = useState('#49454F');
-  const [showColorPreviews, setShowColorPreviews] = useState<boolean>(true);
-  const [compareOnPreview, setCompareOnPreview] = useState<boolean>(true);
-  const [showLineNumbers, setShowLineNumbers] = useState<boolean>(true);
+  const [previewBg, setPreviewBg] = useLocalStorage<string>('settings:previewBg', '#49454F');
+  const [showColorPreviews, setShowColorPreviews] = useLocalStorage<boolean>('settings:showColorPreviews', true);
+  const [compareOnPreview, setCompareOnPreview] = useLocalStorage<boolean>('settings:compareOnPreview', true);
+  const [showLineNumbers, setShowLineNumbers] = useLocalStorage<boolean>('settings:showLineNumbers', true);
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const settingsRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
