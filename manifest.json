@@ -1,0 +1,26 @@
+{
+  "name": "Color Convert",
+  "short_name": "ColorConvert",
+  "description": "A real-time batch color converter that transforms CSS color values (HEX, RGB, HSL) into a selected color space (OKLCH, HEX, RGB, HSL) with configurable output syntax.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#1B1B1F",
+  "theme_color": "#1B1B1F",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
