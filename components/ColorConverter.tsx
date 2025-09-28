@@ -24,6 +24,41 @@ const PLACEHOLDER_TEXT = `/*
   color: #FFFFFF;
 }`;
 
+// Encodes a string to a URL-safe Base64 string, handling Unicode characters.
+const encodeStringToBase64 = (str: string): string => {
+  return btoa(unescape(encodeURIComponent(str)));
+};
+
+// Decodes a URL-safe Base64 string back to a string, handling Unicode characters.
+const decodeStringFromBase64 = (base64: string): string => {
+  return decodeURIComponent(escape(atob(base64)));
+};
+
+// Gets the initial input text from the URL 'code' parameter if it exists,
+// otherwise returns the default placeholder text.
+const getInitialInputText = (): string => {
+  if (typeof window === 'undefined') {
+    return PLACEHOLDER_TEXT;
+  }
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get('code');
+  if (code) {
+    try {
+      return decodeStringFromBase64(code);
+    } catch (error) {
+      console.error('Failed to decode content from URL:', error);
+      alert('Could not load code from the URL because it appears to be corrupted. Loading the default example instead.');
+      
+      // Clean up the corrupted URL parameter
+      const url = new URL(window.location.href);
+      url.searchParams.delete('code');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }
+  return PLACEHOLDER_TEXT;
+};
+
+
 const useDebouncedValue = <T,>(value: T, delay: number): T => {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   useEffect(() => {
@@ -522,7 +557,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 };
 
 const ColorConverter: React.FC = () => {
-  const [inputText, setInputText] = useState<string>(PLACEHOLDER_TEXT);
+  const [inputText, setInputText] = useState<string>(getInitialInputText);
   const [outputText, setOutputText] = useState<string>('');
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [outputFormat, setOutputFormat] = useLocalStorage<ColorFormat>('settings:outputFormat', 'oklch');
@@ -549,6 +584,18 @@ const ColorConverter: React.FC = () => {
     const convertedText = convertCssColors(debouncedInputText, { format: outputFormat, useCssSyntax });
     setOutputText(convertedText);
   }, [debouncedInputText, outputFormat, useCssSyntax]);
+  
+  // Syncs the input text with the URL 'code' parameter.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (debouncedInputText && debouncedInputText !== PLACEHOLDER_TEXT) {
+      const encoded = encodeStringToBase64(debouncedInputText);
+      url.searchParams.set('code', encoded);
+    } else {
+      url.searchParams.delete('code');
+    }
+    window.history.replaceState({}, '', url.toString());
+  }, [debouncedInputText]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
