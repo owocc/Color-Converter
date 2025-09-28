@@ -72,38 +72,38 @@ interface TooltipData {
 
 const ColorTooltip: React.FC<{
     data: TooltipData;
-    bg: string;
     compareEnabled: boolean;
-}> = ({ data, bg, compareEnabled }) => {
+}> = ({ data, compareEnabled }) => {
     const tooltipRef = useRef<HTMLDivElement>(null);
     const [style, setStyle] = useState<React.CSSProperties>({
-        opacity: 0, // Start invisible to avoid flicker
-        top: `${data.top}px`,
-        left: `${data.left}px`,
+        opacity: 0, // Start hidden
     });
 
     useLayoutEffect(() => {
         if (tooltipRef.current) {
             const { innerWidth, innerHeight } = window;
             const { width, height } = tooltipRef.current.getBoundingClientRect();
-            const offset = 15;
+            const offset = 24; // A nice offset from the cursor
 
-            let newTop = data.top;
-            let newLeft = data.left;
+            // Default position: bottom-right of cursor
+            let newTop = data.top + offset;
+            let newLeft = data.left + offset;
 
-            // Adjust if overflowing the viewport
-            if (newLeft + width + offset > innerWidth) {
-                newLeft = innerWidth - width - offset;
-            }
-            if (newTop + height + offset > innerHeight) {
-                newTop = innerHeight - height - offset;
+            // Flip to left of cursor if it overflows right edge
+            if (newLeft + width > innerWidth) {
+                newLeft = data.left - width - offset;
             }
 
-            // Ensure it doesn't go off the top/left edges
-            if (newTop < offset) {
+            // Flip to top of cursor if it overflows bottom edge
+            if (newTop + height > innerHeight) {
+                newTop = data.top - height - offset;
+            }
+
+            // Final boundary checks to prevent going off-screen on the top/left
+            if (newTop < 0) {
                 newTop = offset;
             }
-            if (newLeft < offset) {
+            if (newLeft < 0) {
                 newLeft = offset;
             }
 
@@ -111,6 +111,7 @@ const ColorTooltip: React.FC<{
                 opacity: 1,
                 top: `${newTop}px`,
                 left: `${newLeft}px`,
+                transform: 'translateZ(0)', // GPU acceleration for smoother animations
                 transition: 'opacity 0.1s ease-in',
             });
         }
@@ -121,10 +122,10 @@ const ColorTooltip: React.FC<{
     return (
         <div
             ref={tooltipRef}
-            className="fixed z-10 p-3 rounded-xl shadow-xl text-xs flex flex-col gap-2"
+            className="fixed z-10 p-3 rounded-xl shadow-xl text-xs flex flex-col gap-2 w-52" // Fixed width
             style={{
                 ...style,
-                backgroundColor: bg,
+                backgroundColor: '#242429', // Consistent dark background
                 border: '1px solid #49454F'
             }}
         >
@@ -134,10 +135,10 @@ const ColorTooltip: React.FC<{
                         <span className="text-xs text-[#C8C5CA] opacity-80 px-1">Original</span>
                         <div className="flex items-center gap-2">
                             <div
-                                className="w-5 h-5 rounded border border-[#938F99]/50"
+                                className="w-5 h-5 rounded border border-[#938F99]/50 flex-shrink-0"
                                 style={{ backgroundColor: data.original.color }}
                             ></div>
-                            <span className="font-mono text-sm text-[#E6E1E5]">{data.original.color}</span>
+                            <span className="font-mono text-sm text-[#E6E1E5] break-all">{data.original.color}</span>
                         </div>
                     </div>
                     <hr className="border-t border-[#938F99]/30 my-1"/>
@@ -147,10 +148,10 @@ const ColorTooltip: React.FC<{
                 {showComparison && <span className="text-xs text-[#C8C5CA] opacity-80 px-1">Converted</span>}
                 <div className="flex items-center gap-2">
                     <div
-                        className="w-5 h-5 rounded border border-[#938F99]/50"
+                        className="w-5 h-5 rounded border border-[#938F99]/50 flex-shrink-0"
                         style={{ backgroundColor: data.converted.color }}
                     ></div>
-                    <span className="font-mono text-sm text-[#E6E1E5]">{data.converted.color}</span>
+                    <span className="font-mono text-sm text-[#E6E1E5] break-all">{data.converted.color}</span>
                 </div>
             </div>
         </div>
@@ -300,8 +301,8 @@ const ColorConverter: React.FC = () => {
     if (!showColorPreviews) return;
     setTooltipData({
       converted: { color },
-      top: event.clientY + 20,
-      left: event.clientX + 20,
+      top: event.clientY,
+      left: event.clientX,
     });
   }, [showColorPreviews]);
 
@@ -311,8 +312,8 @@ const ColorConverter: React.FC = () => {
     setTooltipData({
       original: originalColor ? { color: originalColor } : undefined,
       converted: { color: convertedColor },
-      top: event.clientY + 20,
-      left: event.clientX + 20,
+      top: event.clientY,
+      left: event.clientX,
     });
   }, [inputColors, showColorPreviews]);
 
@@ -396,7 +397,7 @@ const ColorConverter: React.FC = () => {
                 </div>
             </div>
         </div>
-        {showColorPreviews && tooltipData && <ColorTooltip data={tooltipData} bg={previewBg} compareEnabled={compareOnPreview} />}
+        {showColorPreviews && tooltipData && <ColorTooltip data={tooltipData} compareEnabled={compareOnPreview} />}
     </div>
   );
 };
