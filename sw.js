@@ -19,6 +19,9 @@ self.addEventListener('install', event => {
 
 // Fetch event: use a network-falling-back-to-cache strategy
 self.addEventListener('fetch', event => {
+  // Only handle http(s) requests
+  if (!event.request.url.startsWith('http')) return;
+
   event.respondWith(
     fetch(event.request)
       .then(response => {

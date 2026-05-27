@@ -1,5 +1,9 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { COLOR_REGEX } from '../services/colorConverter';
+
+export interface CodeEditorHandle {
+  scrollTo(top: number): void;
+}
 
 interface CodeEditorProps {
   value: string;
@@ -13,9 +17,10 @@ interface CodeEditorProps {
   previewsEnabled: boolean;
   highlightingEnabled?: boolean;
   showLineNumbers: boolean;
+  onScroll?: (scrollTop: number) => void;
 }
 
-const CodeEditor: React.FC<CodeEditorProps> = ({
+const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
   value,
   onValueChange,
   readOnly = false,
@@ -27,10 +32,25 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   previewsEnabled,
   highlightingEnabled = true,
   showLineNumbers,
-}) => {
+  onScroll,
+}, ref) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const highlightRef = useRef<HTMLPreElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    scrollTo(top: number) {
+      if (textareaRef.current) {
+        textareaRef.current.scrollTop = top;
+      }
+      if (highlightRef.current) {
+        highlightRef.current.scrollTop = top;
+      }
+      if (lineNumbersRef.current) {
+        lineNumbersRef.current.scrollTop = top;
+      }
+    },
+  }));
 
   const handleScroll = (e: React.UIEvent<HTMLTextAreaElement | HTMLPreElement>) => {
     const { scrollTop, scrollLeft } = e.currentTarget;
@@ -38,10 +58,11 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
       lineNumbersRef.current.scrollTop = scrollTop;
     }
     // Sync highlight layer from textarea scroll, if it exists
-    if (!readOnly && highlightRef.current) { 
+    if (!readOnly && highlightRef.current) {
         highlightRef.current.scrollTop = scrollTop;
         highlightRef.current.scrollLeft = scrollLeft;
     }
+    onScroll?.(scrollTop);
   };
   
   const highlightContent = useMemo(() => {
@@ -171,7 +192,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
               ref={highlightRef}
               className={`w-full h-full m-0 z-0 text-[#C8C5CA] ${readOnly ? 'overflow-auto' : 'overflow-hidden pointer-events-none'}`}
               style={sharedStyles}
-              onScroll={readOnly ? handleScroll : undefined}
+              onScroll={handleScroll}
               aria-hidden="true"
             >
               <code className={readOnly ? 'pointer-events-auto' : ''}>
@@ -182,6 +203,6 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
       )}
     </div>
   );
-};
+});
 
 export default CodeEditor;
