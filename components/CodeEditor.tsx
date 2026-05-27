@@ -106,7 +106,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
 
   const sharedStyles: React.CSSProperties = {
     lineHeight: '1.5rem',
-    fontFamily: 'monospace',
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
     fontSize: '0.875rem',
     padding: '1rem',
     whiteSpace: 'pre',
