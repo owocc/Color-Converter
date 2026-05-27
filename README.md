@@ -1,20 +1,47 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Color Convert
 
-# Run and deploy your AI Studio app
+> A browser-based CSS color format converter. Paste CSS containing color values (HEX, RGB, HSL, OKLCH) and instantly convert them to your target format.
 
-This contains everything you need to run your app locally.
+[中文文档](./README_CN.md)
 
-View your app in AI Studio: https://ai.studio/apps/drive/1jrWmZpVDQsiJmH1XYtZjtOvxtiJU6yhA
+## Features
 
-## Run Locally
+- **Real-time conversion** — Paste CSS, get converted output instantly
+- **Multiple formats** — Supports HEX, RGB, HSL, and OKLCH
+- **Color previews** — Hover (desktop) or tap (mobile) to see color swatches
+- **Compare mode** — View original and converted colors side by side
+- **URL sharing** — Input is encoded to the URL for easy sharing
+- **Sync scroll** — Input and output editors scroll in sync with height limit
+- **PWA support** — Works offline after first visit
+- **Responsive** — Desktop and mobile friendly
 
-**Prerequisites:**  Node.js
+## Getting Started
 
+**Prerequisites:** Node.js
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+```bash
+# Install dependencies
+npm install
+
+# Start dev server
+npm run dev
+
+# Production build
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+## Tech Stack
+
+- React 19
+- TypeScript
+- Vite 6
+- Tailwind CSS (via CDN)
+
+## License
+
+Released under the [MIT License](./LICENSE).
+
+Copyright (c) 2014-2026 [owocc](https://github.com/owocc)
