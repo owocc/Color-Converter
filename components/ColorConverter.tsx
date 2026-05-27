@@ -13,27 +13,8 @@ import {
 } from "../services/colorConverter";
 import CodeEditor, { type CodeEditorHandle } from "./CodeEditor";
 import { useLocalStorage } from "../hooks/useLocalStorage";
-
-const PLACEHOLDER_TEXT = `/*
-  Paste any CSS with colors here.
-  The tool will convert them instantly.
-*/
-
-:root {
-  --md-sys-color-primary: #6750A4;
-  --md-sys-color-secondary: #958DA5;
-  --md-ref-palette-tertiary50: #7D5260;
-
-  /* Other formats work too */
-  --accent-rgb: rgb(103, 80, 164);
-  --accent-hsl: hsl(200, 80%, 60%);
-  --transparent: oklch(59.69% 0.154 292.34 / 50%);
-}
-
-.card {
-  background-color: var(--md-sys-color-secondary);
-  color: #FFFFFF;
-}`;
+import { useTranslation } from "../i18n/context";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 // Encodes a string to a URL-safe Base64 string, handling Unicode characters.
 const encodeStringToBase64 = (str: string): string => {
@@ -46,10 +27,10 @@ const decodeStringFromBase64 = (base64: string): string => {
 };
 
 // Gets the initial input text from the URL 'code' parameter if it exists,
-// otherwise returns the default placeholder text.
-const getInitialInputText = (): string => {
+// otherwise returns null (caller provides the default placeholder).
+const getInitialInputText = (): string | null => {
   if (typeof window === "undefined") {
-    return PLACEHOLDER_TEXT;
+    return null;
   }
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get("code");
@@ -58,9 +39,6 @@ const getInitialInputText = (): string => {
       return decodeStringFromBase64(code);
     } catch (error) {
       console.error("Failed to decode content from URL:", error);
-      alert(
-        "Could not load code from the URL because it appears to be corrupted. Loading the default example instead.",
-      );
 
       // Clean up the corrupted URL parameter
       const url = new URL(window.location.href);
@@ -68,7 +46,7 @@ const getInitialInputText = (): string => {
       window.history.replaceState({}, "", url.toString());
     }
   }
-  return PLACEHOLDER_TEXT;
+  return null;
 };
 
 const useDebouncedValue = <T,>(value: T, delay: number): T => {
@@ -108,7 +86,7 @@ const ToggleSwitch: React.FC<{
 }> = ({ id, checked, onChange, label }) => (
   <label
     htmlFor={id}
-    className="flex items-center justify-between w-full cursor-pointer"
+    className="flex items-center justify-between w-full cursor-pointer gap-4"
   >
     <span className="text-sm font-medium text-[#C8C5CA]">{label}</span>
     <div className="relative">
@@ -142,6 +120,7 @@ const ColorTooltip: React.FC<{
   data: TooltipData;
   compareEnabled: boolean;
 }> = ({ data, compareEnabled }) => {
+  const { t } = useTranslation();
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [style, setStyle] = useState<React.CSSProperties>({
     opacity: 0, // Start hidden
@@ -193,7 +172,7 @@ const ColorTooltip: React.FC<{
   return (
     <div
       ref={tooltipRef}
-      className="fixed z-10 p-3 rounded-xl shadow-xl text-xs flex flex-col gap-2 w-52" // Fixed width
+      className="fixed z-10 p-3 rounded-xl shadow-xl text-xs flex flex-col gap-2 min-w-52 w-max" // Fixed width
       style={{
         ...style,
         backgroundColor: "#242429", // Consistent dark background
@@ -204,7 +183,7 @@ const ColorTooltip: React.FC<{
         <>
           <div className="flex flex-col items-start gap-1.5">
             <span className="text-xs text-[#C8C5CA] opacity-80 px-1">
-              Original
+              {t.original}
             </span>
             <div className="flex items-center gap-2">
               <div
@@ -222,7 +201,7 @@ const ColorTooltip: React.FC<{
       <div className="flex flex-col items-start gap-1.5">
         {showComparison && (
           <span className="text-xs text-[#C8C5CA] opacity-80 px-1">
-            Converted
+            {t.converted}
           </span>
         )}
         <div className="flex items-center gap-2">
@@ -252,6 +231,7 @@ const ColorPreviewDrawer: React.FC<ColorPreviewDrawerProps> = ({
   data,
   compareEnabled,
 }) => {
+  const { t } = useTranslation();
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -298,7 +278,7 @@ const ColorPreviewDrawer: React.FC<ColorPreviewDrawerProps> = ({
             <>
               <div className="flex flex-col items-start gap-1.5">
                 <span className="text-xs text-[#C8C5CA] opacity-80 px-1">
-                  Original
+                  {t.original}
                 </span>
                 <div className="flex items-center gap-3 w-full">
                   <div
@@ -316,7 +296,7 @@ const ColorPreviewDrawer: React.FC<ColorPreviewDrawerProps> = ({
           <div className="flex flex-col items-start gap-1.5">
             {showComparison && (
               <span className="text-xs text-[#C8C5CA] opacity-80 px-1">
-                Converted
+                {t.converted}
               </span>
             )}
             <div className="flex items-center gap-3 w-full">
@@ -376,6 +356,13 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   syncScroll,
   onSyncScrollChange,
 }) => {
+  const { t } = useTranslation();
+  const bgAriaLabels: Record<string, string> = {
+    Dark: t.ariaBgDark,
+    Grey: t.ariaBgGrey,
+    Light: t.ariaBgLight,
+    White: t.ariaBgWhite,
+  };
   const bgOptions = [
     { name: "Dark", color: "#242429" },
     { name: "Grey", color: "#49454F" },
@@ -383,13 +370,13 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     { name: "White", color: "#FFFFFF" },
   ];
   return (
-    <div className="absolute top-full right-0 mt-2 w-60 bg-[#242429] border border-[#49454F] rounded-2xl shadow-xl z-20 p-2 flex flex-col gap-1">
+    <div className="absolute top-full right-0 mt-2 min-w-60 w-max max-w-full lg:max-w-96 bg-[#242429] border border-[#49454F] rounded-2xl shadow-xl z-20 p-2 flex flex-col gap-1">
       <div className="p-2">
         <label
           htmlFor="output-format-settings"
           className="text-xs text-[#C8C5CA] mb-2 block px-1"
         >
-          Output Format
+          {t.outputFormat}
         </label>
         <div className="relative">
           <select
@@ -397,7 +384,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
             value={outputFormat}
             onChange={(e) => onFormatChange(e.target.value as ColorFormat)}
             className="w-full appearance-none bg-[#36343B] border border-[#938F99] rounded-full pl-4 pr-10 py-2.5 text-sm text-[#E6E1E5] focus:ring-2 focus:ring-[#D0BCFF] focus:outline-none focus:border-[#D0BCFF]"
-            aria-label="Select output color format"
+            aria-label={t.ariaOutputFormat}
           >
             <option value="oklch">OKLCH</option>
             <option value="hex">HEX</option>
@@ -420,7 +407,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           id="css-syntax-toggle-settings"
           checked={useCssSyntax}
           onChange={onCssSyntaxChange}
-          label="CSS Syntax"
+          label={t.cssSyntax}
         />
       </div>
       <div className="px-3 py-2">
@@ -428,7 +415,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           id="color-preview-toggle-settings"
           checked={showColorPreviews}
           onChange={onShowColorPreviewsChange}
-          label="Show Color Previews"
+          label={t.showColorPreviews}
         />
       </div>
       <div className="px-3 py-2">
@@ -436,7 +423,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           id="compare-preview-toggle"
           checked={compareOnPreview}
           onChange={onCompareOnPreviewChange}
-          label="Compare on Preview"
+          label={t.compareOnPreview}
         />
       </div>
       <div className="px-3 py-2">
@@ -444,7 +431,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           id="line-numbers-toggle"
           checked={showLineNumbers}
           onChange={onShowLineNumbersChange}
-          label="Show Line Numbers"
+          label={t.showLineNumbers}
         />
       </div>
       <div className="px-3 py-2">
@@ -452,7 +439,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           id="ray-so-toggle-settings"
           checked={showRayButton}
           onChange={onShowRayButtonChange}
-          label="Show 'Open in Ray.so'"
+          label={t.showRayButton}
         />
       </div>
       <div className="px-3 py-2">
@@ -460,18 +447,18 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           id="sync-scroll-toggle-settings"
           checked={syncScroll}
           onChange={onSyncScrollChange}
-          label="Sync Scroll & Limit Height"
+          label={t.syncScroll}
         />
       </div>
       <hr className="border-t border-[#49454F] my-1" />
       <div className="p-2">
-        <p className="text-xs text-[#C8C5CA] px-1 pt-1 pb-2">View Mode</p>
+        <p className="text-xs text-[#C8C5CA] px-1 pt-1 pb-2">{t.viewMode}</p>
         <div className="flex items-center p-0.5 bg-[#36343B] border border-[#49454F] rounded-full w-full">
           <button
             onClick={() => onViewModeChange("dual")}
             className={`p-2 rounded-full transition-colors w-1/2 flex justify-center ${viewMode === "dual" ? "bg-[#4A4458]" : "hover:bg-[#4A4458]/50"}`}
-            aria-label="Dual column view"
-            title="Dual column view"
+            aria-label={t.dualColumn}
+            title={t.dualColumn}
           >
             <svg
               className="w-5 h-5 text-[#C8C5CA]"
@@ -490,8 +477,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           <button
             onClick={() => onViewModeChange("single")}
             className={`p-2 rounded-full transition-colors w-1/2 flex justify-center ${viewMode === "single" ? "bg-[#4A4458]" : "hover:bg-[#4A4458]/50"}`}
-            aria-label="Single column view"
-            title="Single column view"
+            aria-label={t.singleColumn}
+            title={t.singleColumn}
           >
             <svg
               className="w-5 h-5 text-[#C8C5CA]"
@@ -512,7 +499,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       <hr className="border-t border-[#49454F] my-1" />
       <div className="p-2">
         <p className="text-xs text-[#C8C5CA] px-1 pt-1 pb-2">
-          Preview Background
+          {t.previewBackground}
         </p>
         <div className="grid grid-cols-2 gap-2">
           {bgOptions.map((opt) => (
@@ -521,7 +508,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
               onClick={() => onBgChange(opt.color)}
               className={`h-10 w-full rounded-lg text-xs border-2 ${currentBg === opt.color ? "border-[#B69DF8]" : "border-transparent"}`}
               style={{ backgroundColor: opt.color }}
-              aria-label={`Set preview background to ${opt.name}`}
+              aria-label={bgAriaLabels[opt.name]}
             />
           ))}
         </div>
@@ -557,6 +544,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   syncScroll,
   onSyncScrollChange,
 }) => {
+  const { t } = useTranslation();
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -568,6 +556,12 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
     };
   }, [isOpen]);
 
+  const bgAriaLabels: Record<string, string> = {
+    Dark: t.ariaBgDark,
+    Grey: t.ariaBgGrey,
+    Light: t.ariaBgLight,
+    White: t.ariaBgWhite,
+  };
   const bgOptions = [
     { name: "Dark", color: "#242429" },
     { name: "Grey", color: "#49454F" },
@@ -604,7 +598,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               htmlFor="output-format-settings-drawer"
               className="text-xs text-[#C8C5CA] mb-2 block px-1"
             >
-              Output Format
+              {t.outputFormat}
             </label>
             <div className="relative">
               <select
@@ -612,7 +606,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 value={outputFormat}
                 onChange={(e) => onFormatChange(e.target.value as ColorFormat)}
                 className="w-full appearance-none bg-[#36343B] border border-[#938F99] rounded-full pl-4 pr-10 py-2.5 text-sm text-[#E6E1E5] focus:ring-2 focus:ring-[#D0BCFF] focus:outline-none focus:border-[#D0BCFF]"
-                aria-label="Select output color format"
+                aria-label={t.ariaOutputFormat}
               >
                 <option value="oklch">OKLCH</option>
                 <option value="hex">HEX</option>
@@ -635,7 +629,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               id="css-syntax-toggle-settings-drawer"
               checked={useCssSyntax}
               onChange={onCssSyntaxChange}
-              label="CSS Syntax"
+              label={t.cssSyntax}
             />
           </div>
           <div className="px-3 py-2">
@@ -643,7 +637,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               id="color-preview-toggle-settings-drawer"
               checked={showColorPreviews}
               onChange={onShowColorPreviewsChange}
-              label="Show Color Previews"
+              label={t.showColorPreviews}
             />
           </div>
           <div className="px-3 py-2">
@@ -651,7 +645,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               id="compare-preview-toggle-drawer"
               checked={compareOnPreview}
               onChange={onCompareOnPreviewChange}
-              label="Compare on Preview"
+              label={t.compareOnPreview}
             />
           </div>
           <div className="px-3 py-2">
@@ -659,7 +653,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               id="line-numbers-toggle-drawer"
               checked={showLineNumbers}
               onChange={onShowLineNumbersChange}
-              label="Show Line Numbers"
+              label={t.showLineNumbers}
             />
           </div>
           <div className="px-3 py-2">
@@ -667,7 +661,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               id="ray-so-toggle-drawer"
               checked={showRayButton}
               onChange={onShowRayButtonChange}
-              label="Show 'Open in Ray.so'"
+              label={t.showRayButton}
             />
           </div>
           <div className="px-3 py-2">
@@ -675,18 +669,18 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               id="sync-scroll-toggle-drawer"
               checked={syncScroll}
               onChange={onSyncScrollChange}
-              label="Sync Scroll & Limit Height"
+              label={t.syncScroll}
             />
           </div>
           <hr className="border-t border-[#49454F] my-1" />
           <div className="p-2">
-            <p className="text-xs text-[#C8C5CA] px-1 pt-1 pb-2">View Mode</p>
+            <p className="text-xs text-[#C8C5CA] px-1 pt-1 pb-2">{t.viewMode}</p>
             <div className="flex items-center p-0.5 bg-[#36343B] border border-[#49454F] rounded-full w-full">
               <button
                 onClick={() => onViewModeChange("dual")}
                 className={`p-2.5 rounded-full transition-colors w-1/2 flex justify-center ${viewMode === "dual" ? "bg-[#4A4458]" : "hover:bg-[#4A4458]/50"}`}
-                aria-label="Dual column view"
-                title="Dual column view"
+                aria-label={t.dualColumn}
+                title={t.dualColumn}
               >
                 <svg
                   className="w-6 h-6 text-[#C8C5CA]"
@@ -705,8 +699,8 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               <button
                 onClick={() => onViewModeChange("single")}
                 className={`p-2.5 rounded-full transition-colors w-1/2 flex justify-center ${viewMode === "single" ? "bg-[#4A4458]" : "hover:bg-[#4A4458]/50"}`}
-                aria-label="Single column view"
-                title="Single column view"
+                aria-label={t.singleColumn}
+                title={t.singleColumn}
               >
                 <svg
                   className="w-6 h-6 text-[#C8C5CA]"
@@ -727,7 +721,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
           <hr className="border-t border-[#49454F] my-1" />
           <div className="p-2">
             <p className="text-xs text-[#C8C5CA] px-1 pt-1 pb-2">
-              Preview Background
+              {t.previewBackground}
             </p>
             <div className="grid grid-cols-4 gap-2">
               {bgOptions.map((opt) => (
@@ -736,7 +730,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   onClick={() => onBgChange(opt.color)}
                   className={`h-10 w-full rounded-lg text-xs border-2 ${currentBg === opt.color ? "border-[#B69DF8]" : "border-transparent"}`}
                   style={{ backgroundColor: opt.color }}
-                  aria-label={`Set preview background to ${opt.name}`}
+                  aria-label={bgAriaLabels[opt.name]}
                 />
               ))}
             </div>
@@ -748,7 +742,10 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 };
 
 const ColorConverter: React.FC = () => {
-  const [inputText, setInputText] = useState<string>(getInitialInputText);
+  const { t } = useTranslation();
+  const [inputText, setInputText] = useState<string>(() => {
+    return getInitialInputText() ?? t.placeholder;
+  });
   const [outputText, setOutputText] = useState<string>("");
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [outputFormat, setOutputFormat] = useLocalStorage<ColorFormat>(
@@ -787,6 +784,7 @@ const ColorConverter: React.FC = () => {
     true,
   );
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
+  const [isLangDrawerOpen, setIsLangDrawerOpen] = useState<boolean>(false);
   const settingsRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useLocalStorage<"dual" | "single">(
@@ -821,7 +819,7 @@ const ColorConverter: React.FC = () => {
   // Syncs the input text with the URL 'code' parameter.
   useEffect(() => {
     const url = new URL(window.location.href);
-    if (debouncedInputText && debouncedInputText !== PLACEHOLDER_TEXT) {
+    if (debouncedInputText && debouncedInputText !== t.placeholder) {
       const encoded = encodeStringToBase64(debouncedInputText);
       url.searchParams.set("code", encoded);
     } else {
@@ -937,7 +935,7 @@ const ColorConverter: React.FC = () => {
     if (!outputText) return "#";
     try {
       const encoded = encodeStringToBase64(outputText);
-      const title = encodeURIComponent("Color Convert Output");
+      const title = encodeURIComponent(`${t.title} Output`);
       return `https://www.ray.so/#code=${encoded}&title=${title}`;
     } catch (error) {
       console.error("Failed to encode for Ray.so:", error);
@@ -974,19 +972,28 @@ const ColorConverter: React.FC = () => {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-5xl sm:text-6xl font-bold text-[#E6E1E5]">
-            Color Convert
+            {t.title}
           </h1>
           <p className="mt-4 text-lg text-[#C8C5CA]">
-            A utility to convert CSS colors between formats.
+            {t.subtitle}
           </p>
         </div>
         <div className="flex items-center gap-2 mt-2">
+          <LanguageSwitcher
+            isMobile={isMobile}
+            isDrawerOpen={isLangDrawerOpen}
+            onDrawerOpen={() => {
+              setIsLangDrawerOpen(true);
+              setIsSettingsOpen(false);
+            }}
+            onDrawerClose={() => setIsLangDrawerOpen(false)}
+          />
           <a
             href="https://github.com/owocc/Color-Converter"
             target="_blank"
             rel="noopener noreferrer"
             className="p-2.5 rounded-full hover:bg-[#36343B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#242429] focus:ring-[#D0BCFF]"
-            aria-label="View source on GitHub"
+            aria-label={t.ariaGitHub}
           >
             <svg
               className="w-6 h-6 text-[#C8C5CA]"
@@ -1000,9 +1007,12 @@ const ColorConverter: React.FC = () => {
           </a>
           <div className="relative" ref={settingsRef}>
             <button
-              onClick={() => setIsSettingsOpen((prev) => !prev)}
+              onClick={() => {
+                setIsSettingsOpen((prev) => !prev);
+                setIsLangDrawerOpen(false);
+              }}
               className="p-2.5 rounded-full hover:bg-[#36343B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#242429] focus:ring-[#D0BCFF]"
-              aria-label="Open settings"
+              aria-label={t.ariaOpenSettings}
             >
               <svg
                 className="w-6 h-6 text-[#C8C5CA]"
@@ -1035,8 +1045,8 @@ const ColorConverter: React.FC = () => {
               target="_blank"
               rel="noopener noreferrer"
               className={`p-2.5 rounded-full transition-colors ${!outputText ? "opacity-50 cursor-not-allowed" : "hover:bg-[#36343B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#242429] focus:ring-[#D0BCFF]"}`}
-              aria-label="Open output in Ray.so"
-              title="Open output in Ray.so"
+              aria-label={t.ariaRaySo}
+              title={t.ariaRaySo}
               onClick={(e) => {
                 if (!outputText) e.preventDefault();
               }}
@@ -1061,7 +1071,7 @@ const ColorConverter: React.FC = () => {
             className="px-6 py-2.5 text-sm font-bold rounded-full transition-all duration-300 bg-[#B69DF8] text-[#381E72] hover:bg-[#C0A8FA] focus:outline-none focus:ring-4 focus:ring-[#D0BCFF]/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
             disabled={!outputText}
           >
-            {isCopied ? "Copied!" : "Copy Output"}
+            {isCopied ? t.copied : t.copyOutput}
           </button>
         </div>
       </header>
@@ -1071,7 +1081,7 @@ const ColorConverter: React.FC = () => {
         {viewMode === "single" && (
           <div
             role="tablist"
-            aria-label="Editor view"
+            aria-label={t.ariaEditorView}
             className="flex items-center gap-2 p-1 bg-[#36343B] rounded-full mb-4 self-start"
           >
             <button
@@ -1082,7 +1092,7 @@ const ColorConverter: React.FC = () => {
               onClick={() => setActiveSingleView("input")}
               className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${activeSingleView === "input" ? "bg-[#4A4458] text-[#E6E1E5]" : "text-[#C8C5CA] hover:bg-[#4A4458]/50"}`}
             >
-              Input
+              {t.input}
             </button>
             <button
               role="tab"
@@ -1092,7 +1102,7 @@ const ColorConverter: React.FC = () => {
               onClick={() => setActiveSingleView("output")}
               className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${activeSingleView === "output" ? "bg-[#4A4458] text-[#E6E1E5]" : "text-[#C8C5CA] hover:bg-[#4A4458]/50"}`}
             >
-              Output
+              {t.output}
             </button>
           </div>
         )}
@@ -1108,7 +1118,7 @@ const ColorConverter: React.FC = () => {
           >
             {viewMode === "dual" && (
               <div className="flex items-center justify-between mb-3 px-2">
-                <h2 className="text-sm font-medium text-[#C8C5CA]">Input</h2>
+                <h2 className="text-sm font-medium text-[#C8C5CA]">{t.input}</h2>
               </div>
             )}
             <div
@@ -1122,7 +1132,7 @@ const ColorConverter: React.FC = () => {
                 onColorHover={!isMobile ? handleInputColorHover : undefined}
                 onColorLeave={!isMobile ? handleColorLeave : undefined}
                 onColorClick={isMobile ? handleInputColorClick : undefined}
-                ariaLabel="CSS Input"
+                ariaLabel={t.ariaCssInput}
                 previewsEnabled={showColorPreviews}
                 highlightingEnabled={false}
                 showLineNumbers={showLineNumbers}
@@ -1139,7 +1149,7 @@ const ColorConverter: React.FC = () => {
           >
             {viewMode === "dual" && (
               <div className="flex items-center justify-between mb-3 px-2">
-                <h2 className="text-sm font-medium text-[#C8C5CA]">Output</h2>
+                <h2 className="text-sm font-medium text-[#C8C5CA]">{t.output}</h2>
               </div>
             )}
             <div
@@ -1153,7 +1163,7 @@ const ColorConverter: React.FC = () => {
                 onColorHover={!isMobile ? handleOutputColorHover : undefined}
                 onColorLeave={!isMobile ? handleColorLeave : undefined}
                 onColorClick={isMobile ? handleOutputColorClick : undefined}
-                ariaLabel="Converted CSS Output"
+                ariaLabel={t.ariaCssOutput}
                 previewsEnabled={showColorPreviews}
                 showLineNumbers={showLineNumbers}
                 onScroll={syncScroll ? handleOutputScroll : undefined}
@@ -1179,8 +1189,8 @@ const ColorConverter: React.FC = () => {
         {...settingsProps}
       />
       <footer className="text-center text-sm text-[#938F99] py-4">
-        <p>Released under the MIT License.</p>
-        <p>Copyright © 2025-2026 owocc</p>
+        <p>{t.released}</p>
+        <p>{t.copyright}</p>
       </footer>
     </div>
   );
