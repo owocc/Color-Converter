@@ -94,13 +94,7 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
                 onClick={onColorClick ? () => onColorClick(color, currentIndex) : undefined}
                 onMouseEnter={onColorHover ? (e) => onColorHover(color, currentIndex, e) : undefined}
                 onMouseLeave={onColorLeave ? onColorLeave : undefined}
-                style={{
-                    backgroundColor: 'rgba(208, 188, 255, 0.08)',
-                    borderRadius: '3px',
-                    cursor: canInteract ? 'pointer' : 'default',
-                    padding: '1px 2px',
-                    margin: '-1px -2px',
-                }}
+                style={{ cursor: canInteract ? 'pointer' : 'default' }}
             >
                 {color}
             </span>
@@ -142,7 +136,7 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
       {showLineNumbers && (
         <div
             ref={lineNumbersRef}
-            className="line-numbers text-right pl-4 pr-3 pt-4 text-[#938F99] font-mono text-sm select-none overflow-y-hidden bg-[#242429] flex-shrink-0 w-16"
+            className="line-numbers text-right pl-4 pr-3 pt-4 text-[#79747E] dark:text-[#938F99] font-mono text-sm select-none overflow-y-hidden bg-[#F3EDF7] dark:bg-[#242429] flex-shrink-0 w-16"
             aria-hidden="true"
             style={{
               lineHeight: '1.5rem',
@@ -162,7 +156,7 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
             value={value}
             onChange={(e) => onValueChange && onValueChange(e.target.value)}
             onScroll={handleScroll}
-            className="flex-grow w-full h-full resize-none bg-transparent text-[#C8C5CA] caret-[#E6E1E5] focus:outline-none"
+            className="flex-grow w-full h-full resize-none bg-transparent text-[#49454F] dark:text-[#C8C5CA] caret-[#1C1B1F] dark:caret-[#E6E1E5] focus:outline-none"
             style={sharedStyles}
             aria-label={ariaLabel}
             spellCheck="false"
@@ -179,7 +173,7 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
                     value={value}
                     onChange={(e) => onValueChange && onValueChange(e.target.value)}
                     onScroll={handleScroll}
-                    className="absolute inset-0 w-full h-full resize-none z-10 bg-transparent text-transparent caret-[#E6E1E5] focus:outline-none"
+                    className="absolute inset-0 w-full h-full resize-none z-10 bg-transparent text-transparent caret-[#1C1B1F] dark:caret-[#E6E1E5] focus:outline-none"
                     style={sharedStyles}
                     aria-label={ariaLabel}
                     spellCheck="false"
@@ -190,7 +184,7 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(({
             )}
             <pre
               ref={highlightRef}
-              className={`w-full h-full m-0 z-0 text-[#C8C5CA] ${readOnly ? 'overflow-auto' : 'overflow-hidden pointer-events-none'}`}
+              className={`w-full h-full m-0 z-0 text-[#49454F] dark:text-[#C8C5CA] ${readOnly ? 'overflow-auto' : 'overflow-hidden pointer-events-none'}`}
               style={sharedStyles}
               onScroll={handleScroll}
               aria-hidden="true"

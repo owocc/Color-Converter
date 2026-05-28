@@ -53,6 +53,11 @@ const en = {
   ariaBgGrey: "Set preview background to Grey",
   ariaBgLight: "Set preview background to Light",
   ariaBgWhite: "Set preview background to White",
+  themeMode: "Theme",
+  themeLight: "Light",
+  themeDark: "Dark",
+  themeSystem: "System",
+  ariaThemeMode: "Select theme mode",
 };
 
 export default en;

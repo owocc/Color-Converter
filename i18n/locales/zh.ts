@@ -54,6 +54,11 @@ const zh: typeof en = {
   ariaBgGrey: "设置预览背景为灰色",
   ariaBgLight: "设置预览背景为浅色",
   ariaBgWhite: "设置预览背景为白色",
+  themeMode: "主题",
+  themeLight: "亮色",
+  themeDark: "暗色",
+  themeSystem: "跟随系统",
+  ariaThemeMode: "选择主题模式",
 };
 
 export default zh;

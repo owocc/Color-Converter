@@ -5,7 +5,7 @@ import { LocaleProvider } from './i18n/context';
 const App: React.FC = () => {
   return (
     <LocaleProvider>
-      <main className="bg-[#1B1B1F] min-h-screen text-[#E6E1E5] font-sans p-4 sm:p-6 lg:p-8">
+      <main className="bg-[#FEF7FF] dark:bg-[#1B1B1F] min-h-screen text-[#1C1B1F] dark:text-[#E6E1E5] font-sans p-4 sm:p-6 lg:p-8 transition-colors duration-200">
         <div className="max-w-7xl mx-auto">
           <ColorConverter />
         </div>
