@@ -8,7 +8,7 @@ const LANGUAGES: { value: Locale; label: string }[] = [
 
 const GlobeIcon: React.FC = () => (
   <svg
-    className="w-6 h-6 text-[#C8C5CA]"
+    className="w-6 h-6 text-[#49454F] dark:text-[#C8C5CA]"
     fill="none"
     stroke="currentColor"
     viewBox="0 0 24 24"
@@ -81,21 +81,21 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
       <div className="relative" ref={ref}>
         <button
           onClick={handleButtonClick}
-          className="p-2.5 rounded-full hover:bg-[#36343B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#242429] focus:ring-[#D0BCFF]"
+          className="p-2.5 rounded-full hover:bg-[#ECE6F0] dark:hover:bg-[#36343B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#F3EDF7] dark:focus:ring-offset-[#242429] focus:ring-[#D0BCFF]"
           aria-label="Change language"
         >
           <GlobeIcon />
         </button>
         {!isMobile && isDropdownOpen && (
-          <div className="absolute top-full right-0 mt-2 min-w-36 bg-[#242429] border border-[#49454F] rounded-2xl shadow-xl z-20 p-2 flex flex-col gap-1">
+          <div className="absolute top-full right-0 mt-2 min-w-36 bg-[#F3EDF7] dark:bg-[#242429] border border-[#E7E0EC] dark:border-[#49454F] rounded-2xl shadow-xl z-20 p-2 flex flex-col gap-1">
             {LANGUAGES.map((lang) => (
               <button
                 key={lang.value}
                 onClick={() => handleSelect(lang.value)}
                 className={`px-4 py-2.5 text-sm rounded-xl text-left transition-colors ${
                   locale === lang.value
-                    ? "bg-[#4A4458] text-[#E6E1E5]"
-                    : "text-[#C8C5CA] hover:bg-[#36343B]"
+                    ? "bg-[#E8DEF8] dark:bg-[#4A4458] text-[#1C1B1F] dark:text-[#E6E1E5]"
+                    : "text-[#49454F] dark:text-[#C8C5CA] hover:bg-[#E7E0EC] dark:hover:bg-[#36343B]"
                 }`}
               >
                 {lang.label}
@@ -120,14 +120,14 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
             style={{ transition: "opacity 0.3s ease-in-out" }}
           />
           <div
-            className="bg-[#2E2E33] border-t border-[#49454F] rounded-t-2xl w-full max-w-lg p-5 pb-8 shadow-xl relative"
+            className="bg-[#F3EDF7] dark:bg-[#2E2E33] border-t border-[#E7E0EC] dark:border-[#49454F] rounded-t-2xl w-full max-w-lg p-5 pb-8 shadow-xl relative"
             onClick={(e) => e.stopPropagation()}
             style={{
               transform: isDrawerOpen ? "translateY(0)" : "translateY(100%)",
               transition: "transform 0.3s ease-in-out",
             }}
           >
-            <div className="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-[#938F99] rounded-full" />
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-[#79747E] dark:bg-[#938F99] rounded-full" />
             <div className="flex flex-col gap-1 w-full mt-4">
               {LANGUAGES.map((lang) => (
                 <button
@@ -135,8 +135,8 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
                   onClick={() => handleSelect(lang.value)}
                   className={`px-4 py-3 text-base rounded-xl text-left transition-colors ${
                     locale === lang.value
-                      ? "bg-[#4A4458] text-[#E6E1E5]"
-                      : "text-[#C8C5CA] hover:bg-[#36343B]"
+                      ? "bg-[#E8DEF8] dark:bg-[#4A4458] text-[#1C1B1F] dark:text-[#E6E1E5]"
+                      : "text-[#49454F] dark:text-[#C8C5CA] hover:bg-[#E7E0EC] dark:hover:bg-[#36343B]"
                   }`}
                 >
                   {lang.label}

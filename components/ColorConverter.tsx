@@ -88,7 +88,7 @@ const ToggleSwitch: React.FC<{
     htmlFor={id}
     className="flex items-center justify-between w-full cursor-pointer gap-4"
   >
-    <span className="text-sm font-medium text-[#C8C5CA]">{label}</span>
+    <span className="text-sm font-medium text-[#49454F] dark:text-[#C8C5CA]">{label}</span>
     <div className="relative">
       <input
         id={id}
@@ -98,7 +98,7 @@ const ToggleSwitch: React.FC<{
         onChange={(e) => onChange(e.target.checked)}
       />
       <div
-        className={`block w-12 h-6 rounded-full transition-colors ${checked ? "bg-[#B69DF8]" : "bg-[#49454F]"}`}
+        className={`block w-12 h-6 rounded-full transition-colors ${checked ? "bg-[#6750A4] dark:bg-[#B69DF8]" : "bg-[#79747E] dark:bg-[#49454F]"}`}
       ></div>
       <div
         className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${
@@ -172,44 +172,40 @@ const ColorTooltip: React.FC<{
   return (
     <div
       ref={tooltipRef}
-      className="fixed z-10 p-3 rounded-xl shadow-xl text-xs flex flex-col gap-2 min-w-52 w-max" // Fixed width
-      style={{
-        ...style,
-        backgroundColor: "#242429", // Consistent dark background
-        border: "1px solid #49454F",
-      }}
+      className="fixed z-10 p-3 rounded-xl shadow-xl text-xs flex flex-col gap-2 min-w-52 w-max bg-[#F3EDF7] dark:bg-[#242429] border border-[#E7E0EC] dark:border-[#49454F]"
+      style={style}
     >
       {showComparison && data.original && (
         <>
           <div className="flex flex-col items-start gap-1.5">
-            <span className="text-xs text-[#C8C5CA] opacity-80 px-1">
+            <span className="text-xs text-[#49454F] dark:text-[#C8C5CA] opacity-80 px-1">
               {t.original}
             </span>
             <div className="flex items-center gap-2">
               <div
-                className="w-5 h-5 rounded border border-[#938F99]/50 flex-shrink-0"
+                className="w-5 h-5 rounded border border-[#79747E]/50 dark:border-[#938F99]/50 flex-shrink-0"
                 style={{ backgroundColor: data.original.color }}
               ></div>
-              <span className="font-mono text-sm text-[#E6E1E5] break-all">
+              <span className="font-mono text-sm text-[#1C1B1F] dark:text-[#E6E1E5] break-all">
                 {data.original.color}
               </span>
             </div>
           </div>
-          <hr className="border-t border-[#938F99]/30 my-1" />
+          <hr className="border-t border-[#79747E]/30 dark:border-[#938F99]/30 my-1" />
         </>
       )}
       <div className="flex flex-col items-start gap-1.5">
         {showComparison && (
-          <span className="text-xs text-[#C8C5CA] opacity-80 px-1">
+          <span className="text-xs text-[#49454F] dark:text-[#C8C5CA] opacity-80 px-1">
             {t.converted}
           </span>
         )}
         <div className="flex items-center gap-2">
           <div
-            className="w-5 h-5 rounded border border-[#938F99]/50 flex-shrink-0"
+            className="w-5 h-5 rounded border border-[#79747E]/50 dark:border-[#938F99]/50 flex-shrink-0"
             style={{ backgroundColor: data.converted.color }}
           ></div>
-          <span className="font-mono text-sm text-[#E6E1E5] break-all">
+          <span className="font-mono text-sm text-[#1C1B1F] dark:text-[#E6E1E5] break-all">
             {data.converted.color}
           </span>
         </div>
@@ -264,47 +260,47 @@ const ColorPreviewDrawer: React.FC<ColorPreviewDrawerProps> = ({
         style={{ transition: "opacity 0.3s ease-in-out" }}
       />
       <div
-        className="bg-[#2E2E33] border-t border-[#49454F] rounded-t-2xl w-full max-w-lg p-5 pb-8 shadow-xl relative"
+        className="bg-[#F3EDF7] dark:bg-[#2E2E33] border-t border-[#E7E0EC] dark:border-[#49454F] rounded-t-2xl w-full max-w-lg p-5 pb-8 shadow-xl relative"
         onClick={(e) => e.stopPropagation()}
         style={{
           transform: isOpen ? "translateY(0)" : "translateY(100%)",
           transition: "transform 0.3s ease-in-out",
         }}
       >
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-[#938F99] rounded-full" />
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-[#79747E] dark:bg-[#938F99] rounded-full" />
 
         <div className="flex flex-col gap-4 mt-4">
           {showComparison && data.original && (
             <>
               <div className="flex flex-col items-start gap-1.5">
-                <span className="text-xs text-[#C8C5CA] opacity-80 px-1">
+                <span className="text-xs text-[#49454F] dark:text-[#C8C5CA] opacity-80 px-1">
                   {t.original}
                 </span>
                 <div className="flex items-center gap-3 w-full">
                   <div
-                    className="w-8 h-8 rounded-full border border-[#938F99]/50 flex-shrink-0"
+                    className="w-8 h-8 rounded-full border border-[#79747E]/50 dark:border-[#938F99]/50 flex-shrink-0"
                     style={{ backgroundColor: data.original.color }}
                   ></div>
-                  <span className="font-mono text-base text-[#E6E1E5] break-all">
+                  <span className="font-mono text-base text-[#1C1B1F] dark:text-[#E6E1E5] break-all">
                     {data.original.color}
                   </span>
                 </div>
               </div>
-              <hr className="border-t border-[#938F99]/30 my-1" />
+              <hr className="border-t border-[#79747E]/30 dark:border-[#938F99]/30 my-1" />
             </>
           )}
           <div className="flex flex-col items-start gap-1.5">
             {showComparison && (
-              <span className="text-xs text-[#C8C5CA] opacity-80 px-1">
+              <span className="text-xs text-[#49454F] dark:text-[#C8C5CA] opacity-80 px-1">
                 {t.converted}
               </span>
             )}
             <div className="flex items-center gap-3 w-full">
               <div
-                className="w-8 h-8 rounded-full border border-[#938F99]/50 flex-shrink-0"
+                className="w-8 h-8 rounded-full border border-[#79747E]/50 dark:border-[#938F99]/50 flex-shrink-0"
                 style={{ backgroundColor: data.converted.color }}
               ></div>
-              <span className="font-mono text-base text-[#E6E1E5] break-all">
+              <span className="font-mono text-base text-[#1C1B1F] dark:text-[#E6E1E5] break-all">
                 {data.converted.color}
               </span>
             </div>
@@ -334,6 +330,8 @@ interface SettingsPanelProps {
   onShowRayButtonChange: (checked: boolean) => void;
   syncScroll: boolean;
   onSyncScrollChange: (checked: boolean) => void;
+  themeMode: ThemeMode;
+  onThemeModeChange: (mode: ThemeMode) => void;
 }
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({
@@ -355,6 +353,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onShowRayButtonChange,
   syncScroll,
   onSyncScrollChange,
+  themeMode,
+  onThemeModeChange,
 }) => {
   const { t } = useTranslation();
   const bgAriaLabels: Record<string, string> = {
@@ -370,11 +370,26 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     { name: "White", color: "#FFFFFF" },
   ];
   return (
-    <div className="absolute top-full right-0 mt-2 min-w-60 w-max max-w-full lg:max-w-96 bg-[#242429] border border-[#49454F] rounded-2xl shadow-xl z-20 p-2 flex flex-col gap-1">
+    <div className="absolute top-full right-0 mt-2 min-w-60 w-max max-w-full lg:max-w-96 bg-[#F3EDF7] dark:bg-[#242429] border border-[#E7E0EC] dark:border-[#49454F] rounded-2xl shadow-xl z-20 p-2 flex flex-col gap-1">
+      <div className="p-2">
+        <p className="text-xs text-[#49454F] dark:text-[#C8C5CA] px-1 pt-1 pb-2">{t.themeMode}</p>
+        <div className="flex items-center p-0.5 bg-[#ECE6F0] dark:bg-[#36343B] border border-[#E7E0EC] dark:border-[#49454F] rounded-full w-full">
+          {(["light", "dark", "system"] as ThemeMode[]).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => onThemeModeChange(mode)}
+              className={`p-2 rounded-full transition-colors flex-1 flex justify-center text-xs font-medium ${themeMode === mode ? "bg-[#6750A4] dark:bg-[#4A4458] text-white dark:text-[#E6E1E5]" : "text-[#49454F] dark:text-[#C8C5CA] hover:bg-[#E7E0EC] dark:hover:bg-[#4A4458]/50"}`}
+            >
+              {mode === "light" ? t.themeLight : mode === "dark" ? t.themeDark : t.themeSystem}
+            </button>
+          ))}
+        </div>
+      </div>
+      <hr className="border-t border-[#E7E0EC] dark:border-[#49454F] my-1" />
       <div className="p-2">
         <label
           htmlFor="output-format-settings"
-          className="text-xs text-[#C8C5CA] mb-2 block px-1"
+          className="text-xs text-[#49454F] dark:text-[#C8C5CA] mb-2 block px-1"
         >
           {t.outputFormat}
         </label>
@@ -383,7 +398,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
             id="output-format-settings"
             value={outputFormat}
             onChange={(e) => onFormatChange(e.target.value as ColorFormat)}
-            className="w-full appearance-none bg-[#36343B] border border-[#938F99] rounded-full pl-4 pr-10 py-2.5 text-sm text-[#E6E1E5] focus:ring-2 focus:ring-[#D0BCFF] focus:outline-none focus:border-[#D0BCFF]"
+            className="w-full appearance-none bg-[#ECE6F0] dark:bg-[#36343B] border border-[#79747E] dark:border-[#938F99] rounded-full pl-4 pr-10 py-2.5 text-sm text-[#1C1B1F] dark:text-[#E6E1E5] focus:ring-2 focus:ring-[#D0BCFF] focus:outline-none focus:border-[#D0BCFF]"
             aria-label={t.ariaOutputFormat}
           >
             <option value="oklch">OKLCH</option>
@@ -391,7 +406,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <option value="rgb">RGB</option>
             <option value="hsl">HSL</option>
           </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#C8C5CA]">
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#49454F] dark:text-[#C8C5CA]">
             <svg
               className="fill-current h-4 w-4"
               xmlns="http://www.w3.org/2000/svg"
@@ -450,18 +465,18 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           label={t.syncScroll}
         />
       </div>
-      <hr className="border-t border-[#49454F] my-1" />
+      <hr className="border-t border-[#E7E0EC] dark:border-[#49454F] my-1" />
       <div className="p-2">
-        <p className="text-xs text-[#C8C5CA] px-1 pt-1 pb-2">{t.viewMode}</p>
-        <div className="flex items-center p-0.5 bg-[#36343B] border border-[#49454F] rounded-full w-full">
+        <p className="text-xs text-[#49454F] dark:text-[#C8C5CA] px-1 pt-1 pb-2">{t.viewMode}</p>
+        <div className="flex items-center p-0.5 bg-[#ECE6F0] dark:bg-[#36343B] border border-[#E7E0EC] dark:border-[#49454F] rounded-full w-full">
           <button
             onClick={() => onViewModeChange("dual")}
-            className={`p-2 rounded-full transition-colors w-1/2 flex justify-center ${viewMode === "dual" ? "bg-[#4A4458]" : "hover:bg-[#4A4458]/50"}`}
+            className={`p-2 rounded-full transition-colors w-1/2 flex justify-center ${viewMode === "dual" ? "bg-[#E8DEF8] dark:bg-[#4A4458]" : "hover:bg-[#E8DEF8]/50 dark:hover:bg-[#4A4458]/50"}`}
             aria-label={t.dualColumn}
             title={t.dualColumn}
           >
             <svg
-              className="w-5 h-5 text-[#C8C5CA]"
+              className="w-5 h-5 text-[#49454F] dark:text-[#C8C5CA]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -476,12 +491,12 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </button>
           <button
             onClick={() => onViewModeChange("single")}
-            className={`p-2 rounded-full transition-colors w-1/2 flex justify-center ${viewMode === "single" ? "bg-[#4A4458]" : "hover:bg-[#4A4458]/50"}`}
+            className={`p-2 rounded-full transition-colors w-1/2 flex justify-center ${viewMode === "single" ? "bg-[#E8DEF8] dark:bg-[#4A4458]" : "hover:bg-[#E8DEF8]/50 dark:hover:bg-[#4A4458]/50"}`}
             aria-label={t.singleColumn}
             title={t.singleColumn}
           >
             <svg
-              className="w-5 h-5 text-[#C8C5CA]"
+              className="w-5 h-5 text-[#49454F] dark:text-[#C8C5CA]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -496,9 +511,9 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </button>
         </div>
       </div>
-      <hr className="border-t border-[#49454F] my-1" />
+      <hr className="border-t border-[#E7E0EC] dark:border-[#49454F] my-1" />
       <div className="p-2">
-        <p className="text-xs text-[#C8C5CA] px-1 pt-1 pb-2">
+        <p className="text-xs text-[#49454F] dark:text-[#C8C5CA] px-1 pt-1 pb-2">
           {t.previewBackground}
         </p>
         <div className="grid grid-cols-2 gap-2">
@@ -506,7 +521,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <button
               key={opt.name}
               onClick={() => onBgChange(opt.color)}
-              className={`h-10 w-full rounded-lg text-xs border-2 ${currentBg === opt.color ? "border-[#B69DF8]" : "border-transparent"}`}
+              className={`h-10 w-full rounded-lg text-xs border-2 ${currentBg === opt.color ? "border-[#6750A4] dark:border-[#B69DF8]" : "border-transparent"}`}
               style={{ backgroundColor: opt.color }}
               aria-label={bgAriaLabels[opt.name]}
             />
@@ -543,6 +558,8 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   onShowRayButtonChange,
   syncScroll,
   onSyncScrollChange,
+  themeMode,
+  onThemeModeChange,
 }) => {
   const { t } = useTranslation();
   useEffect(() => {
@@ -583,20 +600,35 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
         style={{ transition: "opacity 0.3s ease-in-out" }}
       />
       <div
-        className="bg-[#2E2E33] border-t border-[#49454F] rounded-t-2xl w-full max-w-lg p-5 pb-8 shadow-xl relative"
+        className="bg-[#F3EDF7] dark:bg-[#2E2E33] border-t border-[#E7E0EC] dark:border-[#49454F] rounded-t-2xl w-full max-w-lg p-5 pb-8 shadow-xl relative"
         onClick={(e) => e.stopPropagation()}
         style={{
           transform: isOpen ? "translateY(0)" : "translateY(100%)",
           transition: "transform 0.3s ease-in-out",
         }}
       >
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-[#938F99] rounded-full" />
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-[#79747E] dark:bg-[#938F99] rounded-full" />
 
         <div className="flex flex-col gap-1 w-full mt-4">
           <div className="p-2">
+            <p className="text-xs text-[#49454F] dark:text-[#C8C5CA] px-1 pt-1 pb-2">{t.themeMode}</p>
+            <div className="flex items-center p-0.5 bg-[#ECE6F0] dark:bg-[#36343B] border border-[#E7E0EC] dark:border-[#49454F] rounded-full w-full">
+              {(["light", "dark", "system"] as ThemeMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => onThemeModeChange(mode)}
+                  className={`p-2.5 rounded-full transition-colors flex-1 flex justify-center text-sm font-medium ${themeMode === mode ? "bg-[#6750A4] dark:bg-[#4A4458] text-white dark:text-[#E6E1E5]" : "text-[#49454F] dark:text-[#C8C5CA] hover:bg-[#E7E0EC] dark:hover:bg-[#4A4458]/50"}`}
+                >
+                  {mode === "light" ? t.themeLight : mode === "dark" ? t.themeDark : t.themeSystem}
+                </button>
+              ))}
+            </div>
+          </div>
+          <hr className="border-t border-[#E7E0EC] dark:border-[#49454F] my-1" />
+          <div className="p-2">
             <label
               htmlFor="output-format-settings-drawer"
-              className="text-xs text-[#C8C5CA] mb-2 block px-1"
+              className="text-xs text-[#49454F] dark:text-[#C8C5CA] mb-2 block px-1"
             >
               {t.outputFormat}
             </label>
@@ -605,7 +637,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 id="output-format-settings-drawer"
                 value={outputFormat}
                 onChange={(e) => onFormatChange(e.target.value as ColorFormat)}
-                className="w-full appearance-none bg-[#36343B] border border-[#938F99] rounded-full pl-4 pr-10 py-2.5 text-sm text-[#E6E1E5] focus:ring-2 focus:ring-[#D0BCFF] focus:outline-none focus:border-[#D0BCFF]"
+                className="w-full appearance-none bg-[#ECE6F0] dark:bg-[#36343B] border border-[#79747E] dark:border-[#938F99] rounded-full pl-4 pr-10 py-2.5 text-sm text-[#1C1B1F] dark:text-[#E6E1E5] focus:ring-2 focus:ring-[#D0BCFF] focus:outline-none focus:border-[#D0BCFF]"
                 aria-label={t.ariaOutputFormat}
               >
                 <option value="oklch">OKLCH</option>
@@ -613,7 +645,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 <option value="rgb">RGB</option>
                 <option value="hsl">HSL</option>
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#C8C5CA]">
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[#49454F] dark:text-[#C8C5CA]">
                 <svg
                   className="fill-current h-4 w-4"
                   xmlns="http://www.w3.org/2000/svg"
@@ -672,18 +704,18 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               label={t.syncScroll}
             />
           </div>
-          <hr className="border-t border-[#49454F] my-1" />
+          <hr className="border-t border-[#E7E0EC] dark:border-[#49454F] my-1" />
           <div className="p-2">
-            <p className="text-xs text-[#C8C5CA] px-1 pt-1 pb-2">{t.viewMode}</p>
-            <div className="flex items-center p-0.5 bg-[#36343B] border border-[#49454F] rounded-full w-full">
+            <p className="text-xs text-[#49454F] dark:text-[#C8C5CA] px-1 pt-1 pb-2">{t.viewMode}</p>
+            <div className="flex items-center p-0.5 bg-[#ECE6F0] dark:bg-[#36343B] border border-[#E7E0EC] dark:border-[#49454F] rounded-full w-full">
               <button
                 onClick={() => onViewModeChange("dual")}
-                className={`p-2.5 rounded-full transition-colors w-1/2 flex justify-center ${viewMode === "dual" ? "bg-[#4A4458]" : "hover:bg-[#4A4458]/50"}`}
+                className={`p-2.5 rounded-full transition-colors w-1/2 flex justify-center ${viewMode === "dual" ? "bg-[#E8DEF8] dark:bg-[#4A4458]" : "hover:bg-[#E8DEF8]/50 dark:hover:bg-[#4A4458]/50"}`}
                 aria-label={t.dualColumn}
                 title={t.dualColumn}
               >
                 <svg
-                  className="w-6 h-6 text-[#C8C5CA]"
+                  className="w-6 h-6 text-[#49454F] dark:text-[#C8C5CA]"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -698,12 +730,12 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               </button>
               <button
                 onClick={() => onViewModeChange("single")}
-                className={`p-2.5 rounded-full transition-colors w-1/2 flex justify-center ${viewMode === "single" ? "bg-[#4A4458]" : "hover:bg-[#4A4458]/50"}`}
+                className={`p-2.5 rounded-full transition-colors w-1/2 flex justify-center ${viewMode === "single" ? "bg-[#E8DEF8] dark:bg-[#4A4458]" : "hover:bg-[#E8DEF8]/50 dark:hover:bg-[#4A4458]/50"}`}
                 aria-label={t.singleColumn}
                 title={t.singleColumn}
               >
                 <svg
-                  className="w-6 h-6 text-[#C8C5CA]"
+                  className="w-6 h-6 text-[#49454F] dark:text-[#C8C5CA]"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -718,9 +750,9 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               </button>
             </div>
           </div>
-          <hr className="border-t border-[#49454F] my-1" />
+          <hr className="border-t border-[#E7E0EC] dark:border-[#49454F] my-1" />
           <div className="p-2">
-            <p className="text-xs text-[#C8C5CA] px-1 pt-1 pb-2">
+            <p className="text-xs text-[#49454F] dark:text-[#C8C5CA] px-1 pt-1 pb-2">
               {t.previewBackground}
             </p>
             <div className="grid grid-cols-4 gap-2">
@@ -728,7 +760,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 <button
                   key={opt.name}
                   onClick={() => onBgChange(opt.color)}
-                  className={`h-10 w-full rounded-lg text-xs border-2 ${currentBg === opt.color ? "border-[#B69DF8]" : "border-transparent"}`}
+                  className={`h-10 w-full rounded-lg text-xs border-2 ${currentBg === opt.color ? "border-[#6750A4] dark:border-[#B69DF8]" : "border-transparent"}`}
                   style={{ backgroundColor: opt.color }}
                   aria-label={bgAriaLabels[opt.name]}
                 />
@@ -740,6 +772,8 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
     </div>
   );
 };
+
+export type ThemeMode = "light" | "dark" | "system";
 
 const ColorConverter: React.FC = () => {
   const { t } = useTranslation();
@@ -783,6 +817,10 @@ const ColorConverter: React.FC = () => {
     "settings:syncScroll",
     true,
   );
+  const [themeMode, setThemeMode] = useLocalStorage<ThemeMode>(
+    "settings:themeMode",
+    "system",
+  );
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [isLangDrawerOpen, setIsLangDrawerOpen] = useState<boolean>(false);
   const settingsRef = useRef<HTMLDivElement>(null);
@@ -815,6 +853,29 @@ const ColorConverter: React.FC = () => {
     });
     setOutputText(convertedText);
   }, [debouncedInputText, outputFormat, useCssSyntax]);
+
+  // Theme toggling
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+
+    const applyTheme = () => {
+      const shouldBeDark =
+        themeMode === "dark" ||
+        (themeMode === "system" && mq.matches);
+      document.documentElement.classList.toggle("dark", shouldBeDark);
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) {
+        meta.setAttribute("content", shouldBeDark ? "#1B1B1F" : "#FEF7FF");
+      }
+    };
+
+    applyTheme();
+
+    if (themeMode === "system") {
+      mq.addEventListener("change", applyTheme);
+      return () => mq.removeEventListener("change", applyTheme);
+    }
+  }, [themeMode]);
 
   // Syncs the input text with the URL 'code' parameter.
   useEffect(() => {
@@ -965,16 +1026,18 @@ const ColorConverter: React.FC = () => {
     },
     viewMode,
     onViewModeChange: setViewMode,
+    themeMode,
+    onThemeModeChange: setThemeMode,
   };
 
   return (
     <div className="flex flex-col gap-12">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-5xl sm:text-6xl font-bold text-[#E6E1E5]">
+          <h1 className="text-5xl sm:text-6xl font-bold text-[#1C1B1F] dark:text-[#E6E1E5]">
             {t.title}
           </h1>
-          <p className="mt-4 text-lg text-[#C8C5CA]">
+          <p className="mt-4 text-lg text-[#49454F] dark:text-[#C8C5CA]">
             {t.subtitle}
           </p>
         </div>
@@ -992,11 +1055,11 @@ const ColorConverter: React.FC = () => {
             href="https://github.com/owocc/Color-Converter"
             target="_blank"
             rel="noopener noreferrer"
-            className="p-2.5 rounded-full hover:bg-[#36343B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#242429] focus:ring-[#D0BCFF]"
+            className="p-2.5 rounded-full hover:bg-[#ECE6F0] dark:hover:bg-[#36343B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#F3EDF7] dark:focus:ring-offset-[#242429] focus:ring-[#D0BCFF]"
             aria-label={t.ariaGitHub}
           >
             <svg
-              className="w-6 h-6 text-[#C8C5CA]"
+              className="w-6 h-6 text-[#49454F] dark:text-[#C8C5CA]"
               fill="currentColor"
               viewBox="0 0 16 16"
               xmlns="http://www.w3.org/2000/svg"
@@ -1011,11 +1074,11 @@ const ColorConverter: React.FC = () => {
                 setIsSettingsOpen((prev) => !prev);
                 setIsLangDrawerOpen(false);
               }}
-              className="p-2.5 rounded-full hover:bg-[#36343B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#242429] focus:ring-[#D0BCFF]"
+              className="p-2.5 rounded-full hover:bg-[#ECE6F0] dark:hover:bg-[#36343B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#F3EDF7] dark:focus:ring-offset-[#242429] focus:ring-[#D0BCFF]"
               aria-label={t.ariaOpenSettings}
             >
               <svg
-                className="w-6 h-6 text-[#C8C5CA]"
+                className="w-6 h-6 text-[#49454F] dark:text-[#C8C5CA]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1044,7 +1107,7 @@ const ColorConverter: React.FC = () => {
               href={outputText ? raySoUrl : undefined}
               target="_blank"
               rel="noopener noreferrer"
-              className={`p-2.5 rounded-full transition-colors ${!outputText ? "opacity-50 cursor-not-allowed" : "hover:bg-[#36343B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#242429] focus:ring-[#D0BCFF]"}`}
+              className={`p-2.5 rounded-full transition-colors ${!outputText ? "opacity-50 cursor-not-allowed" : "hover:bg-[#ECE6F0] dark:hover:bg-[#36343B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#F3EDF7] dark:focus:ring-offset-[#242429] focus:ring-[#D0BCFF]"}`}
               aria-label={t.ariaRaySo}
               title={t.ariaRaySo}
               onClick={(e) => {
@@ -1052,7 +1115,7 @@ const ColorConverter: React.FC = () => {
               }}
             >
               <svg
-                className="w-6 h-6 text-[#C8C5CA]"
+                className="w-6 h-6 text-[#49454F] dark:text-[#C8C5CA]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -1068,7 +1131,7 @@ const ColorConverter: React.FC = () => {
           )}
           <button
             onClick={handleCopy}
-            className="px-6 py-2.5 text-sm font-bold rounded-full transition-all duration-300 bg-[#B69DF8] text-[#381E72] hover:bg-[#C0A8FA] focus:outline-none focus:ring-4 focus:ring-[#D0BCFF]/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-600"
+            className="px-6 py-2.5 text-sm font-bold rounded-full transition-all duration-300 bg-[#6750A4] dark:bg-[#B69DF8] text-white dark:text-[#381E72] hover:bg-[#7C65B5] dark:hover:bg-[#C0A8FA] focus:outline-none focus:ring-4 focus:ring-[#D0BCFF]/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-[#79747E] dark:disabled:bg-gray-600"
             disabled={!outputText}
           >
             {isCopied ? t.copied : t.copyOutput}
@@ -1082,7 +1145,7 @@ const ColorConverter: React.FC = () => {
           <div
             role="tablist"
             aria-label={t.ariaEditorView}
-            className="flex items-center gap-2 p-1 bg-[#36343B] rounded-full mb-4 self-start"
+            className="flex items-center gap-2 p-1 bg-[#ECE6F0] dark:bg-[#36343B] rounded-full mb-4 self-start"
           >
             <button
               role="tab"
@@ -1090,7 +1153,7 @@ const ColorConverter: React.FC = () => {
               id="tab-input"
               aria-controls="panel-input"
               onClick={() => setActiveSingleView("input")}
-              className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${activeSingleView === "input" ? "bg-[#4A4458] text-[#E6E1E5]" : "text-[#C8C5CA] hover:bg-[#4A4458]/50"}`}
+              className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${activeSingleView === "input" ? "bg-[#E8DEF8] dark:bg-[#4A4458] text-[#1C1B1F] dark:text-[#E6E1E5]" : "text-[#49454F] dark:text-[#C8C5CA] hover:bg-[#E8DEF8]/50 dark:hover:bg-[#4A4458]/50"}`}
             >
               {t.input}
             </button>
@@ -1100,7 +1163,7 @@ const ColorConverter: React.FC = () => {
               id="tab-output"
               aria-controls="panel-output"
               onClick={() => setActiveSingleView("output")}
-              className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${activeSingleView === "output" ? "bg-[#4A4458] text-[#E6E1E5]" : "text-[#C8C5CA] hover:bg-[#4A4458]/50"}`}
+              className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${activeSingleView === "output" ? "bg-[#E8DEF8] dark:bg-[#4A4458] text-[#1C1B1F] dark:text-[#E6E1E5]" : "text-[#49454F] dark:text-[#C8C5CA] hover:bg-[#E8DEF8]/50 dark:hover:bg-[#4A4458]/50"}`}
             >
               {t.output}
             </button>
@@ -1118,11 +1181,11 @@ const ColorConverter: React.FC = () => {
           >
             {viewMode === "dual" && (
               <div className="flex items-center justify-between mb-3 px-2">
-                <h2 className="text-sm font-medium text-[#C8C5CA]">{t.input}</h2>
+                <h2 className="text-sm font-medium text-[#49454F] dark:text-[#C8C5CA]">{t.input}</h2>
               </div>
             )}
             <div
-              className={`bg-[#242429] border border-[#49454F] rounded-3xl p-1 flex flex-col min-h-[400px] sm:min-h-[500px] overflow-hidden flex-grow ${syncScroll ? "max-h-[80dvh]" : ""}`}
+              className={`bg-[#F3EDF7] dark:bg-[#242429] border border-[#E7E0EC] dark:border-[#49454F] rounded-3xl p-1 flex flex-col min-h-[400px] sm:min-h-[500px] overflow-hidden flex-grow ${syncScroll ? "max-h-[80dvh]" : ""}`}
             >
               <CodeEditor
                 ref={inputEditorRef}
@@ -1149,11 +1212,11 @@ const ColorConverter: React.FC = () => {
           >
             {viewMode === "dual" && (
               <div className="flex items-center justify-between mb-3 px-2">
-                <h2 className="text-sm font-medium text-[#C8C5CA]">{t.output}</h2>
+                <h2 className="text-sm font-medium text-[#49454F] dark:text-[#C8C5CA]">{t.output}</h2>
               </div>
             )}
             <div
-              className={`bg-[#242429] border border-[#49454F] rounded-3xl p-1 flex flex-col min-h-[400px] sm:min-h-[500px] overflow-hidden flex-grow ${syncScroll ? "max-h-[80dvh]" : ""}`}
+              className={`bg-[#F3EDF7] dark:bg-[#242429] border border-[#E7E0EC] dark:border-[#49454F] rounded-3xl p-1 flex flex-col min-h-[400px] sm:min-h-[500px] overflow-hidden flex-grow ${syncScroll ? "max-h-[80dvh]" : ""}`}
             >
               <CodeEditor
                 ref={outputEditorRef}
@@ -1188,7 +1251,7 @@ const ColorConverter: React.FC = () => {
         onClose={() => setIsSettingsOpen(false)}
         {...settingsProps}
       />
-      <footer className="text-center text-sm text-[#938F99] py-4">
+      <footer className="text-center text-sm text-[#79747E] dark:text-[#938F99] py-4">
         <p>{t.released}</p>
         <p>{t.copyright}</p>
       </footer>
